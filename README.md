@@ -22,9 +22,48 @@ Administradores e funcionários contam com uma interface dedicada para gerenciar
 
 ---
 
+## Tecnologias
+
+| Camada | Tecnologia | Função |
+|--------|-----------|--------|
+| Frontend | [Next.js](https://nextjs.org/) | Interface do cliente (cardápio, pedidos, status) e painel admin |
+| Backend | [Express](https://expressjs.com/) | API REST e gerenciamento de sessões/autenticação |
+| Banco de dados | [PostgreSQL](https://www.postgresql.org/) | Armazenamento relacional de mesas, cardápio, pedidos e comandas |
+| Tempo real | [Socket.io](https://socket.io/) | Atualização de status de pedidos sem recarregar a página |
+
+---
+
+## Arquitetura
+
+```
+Cliente (Browser / Mobile)
+         │  HTTPS
+         ▼
+    Next.js (Frontend SSR)
+         │  REST API + WebSocket
+         ▼
+    Express (Backend API)
+         │  SQL
+         ▼
+    PostgreSQL (Database)
+```
+
+**Fluxo principal do cliente:** QR Code escaneado → token validado pela API → mesa e comanda associadas → acesso ao cardápio liberado.
+
+**Fluxo do funcionário:** login com e-mail/senha → JWT retornado → painel administrativo carrega comandas abertas em tempo real via WebSocket.
+
+---
+
+## Banco de Dados
+
+Descrição das entidades, intenções de design e diagrama de relacionamentos: [docs/database.md](docs/database.md)
+
+---
+
 ## Documentação
 
 - [User Stories e Requisitos](user-stories.md)
+- [Banco de Dados — Entidades e Relacionamentos](docs/database.md)
 
 ---
 

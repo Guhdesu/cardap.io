@@ -183,6 +183,48 @@ O **cardap.io** é um sistema que permite a clientes de restaurantes/estabelecim
 
 ---
 
+### US-09 — Autenticação do administrador e funcionário
+**Prioridade:** Alta
+
+> Como **administrador ou funcionário do restaurante**, quero **fazer login com e-mail e senha**, para que **eu possa acessar o painel de gerenciamento de forma segura e com permissões adequadas ao meu perfil**.
+
+**Critérios de Aceitação:**
+1. O sistema disponibiliza uma tela de login separada da interface do cliente, acessível apenas por URL direta (ex.: `/admin/login`).
+2. Após autenticação bem-sucedida, o sistema emite um token JWT com expiração de 8 horas e redireciona o usuário para o painel correspondente ao seu perfil (admin ou funcionário).
+3. Administradores têm acesso a todas as funcionalidades (gerência de cardápio, mesas, comandas e usuários); funcionários têm acesso restrito à gerência de comandas.
+4. Após 5 tentativas de login inválidas consecutivas, a conta é bloqueada temporariamente por 15 minutos e o usuário é notificado.
+
+**Verificação INVEST:**
+- **I**ndependente: pode ser desenvolvida antes das US-04 e US-05, pois estas dependem de um usuário autenticado.
+- **N**egociável: duração do bloqueio, validade do token e número de tentativas são ajustáveis.
+- **V**aliosa: sem autenticação, o painel admin ficaria exposto a qualquer usuário.
+- **E**stimável: 5–8 pontos.
+- **S**mall: foco no fluxo de login e controle de acesso por role; cadastro de usuários é escopo do admin.
+- **T**estável: verificável com credenciais válidas, inválidas, expiradas e bloqueio por tentativas.
+
+---
+
+### US-10 — Cadastro de mesas e geração de QR Codes
+**Prioridade:** Alta
+
+> Como **administrador do sistema**, quero **cadastrar as mesas do estabelecimento e gerar QR Codes vinculados a cada uma**, para que **os clientes possam se autenticar e iniciar uma comanda ao escanear o cartão entregue na chegada**.
+
+**Critérios de Aceitação:**
+1. O administrador pode cadastrar mesas informando apenas o número identificador; o sistema gera automaticamente um token único e o QR Code correspondente.
+2. O QR Code de cada mesa pode ser exportado como imagem (PNG) para impressão e colagem nos cartões físicos.
+3. Ao remover uma mesa, o QR Code vinculado é automaticamente invalidado; escaneamentos posteriores retornam erro de "mesa inativa".
+4. Após o fechamento de uma comanda (US-08), o QR Code daquela mesa é automaticamente reativado para a próxima sessão, sem necessidade de gerar um novo.
+
+**Verificação INVEST:**
+- **I**ndependente: depende da US-09 (admin autenticado), mas pode ser planejada em paralelo.
+- **N**egociável: formato de exportação do QR Code (PNG, PDF, tamanho) e campos da mesa são ajustáveis.
+- **V**aliosa: sem essa US, a US-01 (autenticação do cliente) não tem QR Codes para escanear.
+- **E**stimável: 5–8 pontos.
+- **S**mall: focada na criação e gerência do vínculo mesa ↔ QR Code; sessão do cliente é tratada na US-01.
+- **T**estável: verificável com criação, exportação, invalidação e reativação de QR Codes.
+
+---
+
 ## Requisitos Não-Funcionais
 
 Utilizando **FURPS+** como referência:
@@ -201,6 +243,11 @@ O sistema deve estar disponível **99% do tempo** durante o horário de funciona
 
 ### RNF-03 — Usabilidade (Usability)
 A interface voltada ao cliente deve ser **responsiva e funcional em dispositivos móveis com tela mínima de 4 polegadas**, sem necessidade de scroll horizontal, com elementos de toque com área mínima de 44×44 px, seguindo as diretrizes de acessibilidade **WCAG 2.1 nível AA**. Nenhum fluxo principal (escanear QR Code → visualizar cardápio → fazer pedido) deve exigir mais de **4 toques/cliques** do início ao fim.
+
+---
+
+### RNF-04 — Segurança (Security)
+O acesso ao painel administrativo deve ser protegido por **autenticação via JWT** com expiração máxima de 8 horas, sem renovação automática. Todas as rotas da API que manipulam dados sensíveis (comandas, usuários, cardápio) devem exigir um token válido; requisições sem token ou com token expirado recebem HTTP 401. Os dados de sessão do cliente (vinculados ao QR Code) devem ser isolados por comanda — um cliente não pode acessar dados de outra mesa. Senhas de usuários devem ser armazenadas com hash bcrypt (fator de custo ≥ 10).
 
 ---
 
