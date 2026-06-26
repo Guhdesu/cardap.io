@@ -1,0 +1,134 @@
+classDiagram
+    direction TB
+
+    class ItemCardapio {
+        -id: string
+        -nome: string
+        -descricao: string
+        -preco: number
+        -imagemUrl: string
+        -disponivel: boolean
+        -categoriaId: string
+        +atualizarPreco(preco) void
+        +atualizarImagem(url) void
+        +marcarIndisponivel() void
+        +marcarDisponivel() void
+    }
+
+    class Categoria {
+        -id: string
+        -nome: string
+        -itens: ItemCardapio[]
+        +adicionarItem(item) void
+        +removerItem(id) void
+    }
+
+    class Comanda {
+        -id: string
+        -mesaId: string
+        -status: StatusComanda
+        -pedidos: Pedido[]
+        -abertaEm: Date
+        -fechadaEm: Date
+        +adicionarPedido(pedido) void
+        +calcularTotal() number
+        +solicitarFechamento() void
+        +encerrar() void
+    }
+
+    class Pedido {
+        -id: string
+        -comandaId: string
+        -itens: ItemPedido[]
+        -status: StatusPedido
+        -criadoEm: Date
+        +atualizarStatus(status) void
+        +calcularSubtotal() number
+    }
+
+    class ItemPedido {
+        -id: string
+        -itemCardapioId: string
+        -quantidade: number
+        -observacao: string
+        -precoUnitario: number
+        +calcularSubtotal() number
+    }
+
+    class Mesa {
+        -id: string
+        -numero: number
+        -cartaoId: string
+        +abrirComanda() Comanda
+        +fecharComanda() void
+    }
+
+    class Cartao {
+        -id: string
+        -qrCode: string
+        -mesaId: string
+        -ativo: boolean
+        +validar() boolean
+        +liberar() void
+    }
+
+    class Cliente {
+        -id: string
+        -cartaoId: string
+        -autenticadoEm: Date
+        +autenticar(qrCode) boolean
+        +fazerPedido(itens) Pedido
+    }
+
+    class Funcionario {
+        -id: string
+        -nome: string
+        -email: string
+        -cargo: CargoFuncionario
+        +atualizarStatusPedido(pedidoId, status) void
+        +confirmarPagamento(comandaId) void
+    }
+
+    class Administrador {
+        +adicionarItemCardapio(item) void
+        +editarItemCardapio(id, dados) void
+        +removerItemCardapio(id) void
+        +gerenciarCategorias() void
+    }
+
+    class StatusComanda {
+        <<enumeration>>
+        ABERTA
+        AGUARDANDO_PAGAMENTO
+        ENCERRADA
+    }
+
+    class StatusPedido {
+        <<enumeration>>
+        PENDENTE
+        EM_PREPARO
+        A_CAMINHO
+        ENTREGUE
+    }
+
+    class CargoFuncionario {
+        <<enumeration>>
+        GARCOM
+        COZINHEIRO
+        CAIXA
+        ADMINISTRADOR
+    }
+
+    Categoria "1" --> "0..*" ItemCardapio : contém
+    Comanda "1" *-- "0..*" Pedido : possui
+    Pedido "1" *-- "1..*" ItemPedido : composto por
+    ItemPedido "0..*" --> "1" ItemCardapio : referencia
+    Mesa "1" --> "0..1" Comanda : possui
+    Mesa "1" --> "1" Cartao : identificada por
+    Cliente "1" --> "1" Cartao : autenticado via
+    Cliente "1" --> "0..*" Pedido : realiza
+    Funcionario "1" --> "0..*" Comanda : gerencia
+    Funcionario <|-- Administrador : herda
+    Comanda --> StatusComanda : usa
+    Pedido --> StatusPedido : usa
+    Funcionario --> CargoFuncionario : usa
