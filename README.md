@@ -64,6 +64,19 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 
 - [User Stories e Requisitos](user-stories.md)
 - [Banco de Dados — Entidades e Relacionamentos](docs/database.md)
+| Documento | Descrição |
+|-----------|-----------|
+| [User Stories e Requisitos](user-stories.md) | 8 User Stories com critérios de aceitação e RNFs |
+| [Diagrama de Classes](docs/diagrama-classes.md) | Modelo de classes do domínio (Mermaid) |
+| [Decisões de Modelagem](docs/decisoes-modelagem.md) | Justificativa das escolhas de design |
+
+### Código — Modelos Traduzidos
+
+| Arquivo | Classe |
+|---------|--------|
+| [src/models/ItemCardapio.ts](src/models/ItemCardapio.ts) | Item do cardápio com preço, imagem e disponibilidade |
+| [src/models/Comanda.ts](src/models/Comanda.ts) | Comanda da mesa com ciclo de vida e total |
+| [src/models/types.ts](src/models/types.ts) | Enumerações de status e cargo |
 
 ---
 

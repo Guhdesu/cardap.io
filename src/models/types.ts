@@ -1,0 +1,19 @@
+export enum StatusComanda {
+  ABERTA = 'ABERTA',
+  AGUARDANDO_PAGAMENTO = 'AGUARDANDO_PAGAMENTO',
+  ENCERRADA = 'ENCERRADA',
+}
+
+export enum StatusPedido {
+  PENDENTE = 'PENDENTE',
+  EM_PREPARO = 'EM_PREPARO',
+  A_CAMINHO = 'A_CAMINHO',
+  ENTREGUE = 'ENTREGUE',
+}
+
+export enum CargoFuncionario {
+  GARCOM = 'GARCOM',
+  COZINHEIRO = 'COZINHEIRO',
+  CAIXA = 'CAIXA',
+  ADMINISTRADOR = 'ADMINISTRADOR',
+}
