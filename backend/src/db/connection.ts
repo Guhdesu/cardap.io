@@ -4,11 +4,13 @@ if (!process.env.DATABASE_URL) {
   console.warn('[db] DATABASE_URL não definida — banco desabilitado');
 }
 
+const needsSSL = process.env.DATABASE_URL && 
+                 !process.env.DATABASE_URL.includes('localhost') && 
+                 !process.env.DATABASE_URL.includes('127.0.0.1');
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: needsSSL ? { rejectUnauthorized: false } : false,
 });
 
 // Testa a conexão na inicialização
