@@ -20,6 +20,10 @@ import { qrcodeRouter } from './routes/qrcode';
 // ── Socket ────────────────────────────────────────────────
 import { setupSocketEvents } from './socket/events';
 
+// ── Serviços ──────────────────────────────────────────────
+import { CardapioService } from './services/CardapioService';
+import { MesaService } from './services/MesaService';
+
 // ── Config ────────────────────────────────────────────────
 const PORT = process.env.PORT ?? 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
@@ -28,6 +32,10 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 const cardapioRepo = new CardapioRepository();
 const mesaRepo = new MesaRepository();
 const pedidoRepo = new PedidoRepository(cardapioRepo, mesaRepo);
+
+// ── Instâncias dos serviços ────────────────────────────────
+const cardapioService = new CardapioService(cardapioRepo);
+const mesaService = new MesaService(mesaRepo);
 
 // ── App Express ───────────────────────────────────────────
 const app = express();
@@ -41,10 +49,10 @@ app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 
 // ── Rotas ─────────────────────────────────────────────────
-app.use('/cardapio', cardapioRouter(cardapioRepo));
-app.use('/mesas', mesasRouter(mesaRepo));
+app.use('/cardapio', cardapioRouter(cardapioService));
+app.use('/mesas', mesasRouter(mesaService));
 app.use('/pedidos', pedidosRouter(pedidoRepo, mesaRepo, io));
-app.use('/qrcode', qrcodeRouter(mesaRepo, FRONTEND_URL));
+app.use('/qrcode', qrcodeRouter(mesaService, FRONTEND_URL));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

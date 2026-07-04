@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { ICardapioRepository } from '../repositories/interfaces';
+import { CardapioService } from '../services/CardapioService';
 
-export function cardapioRouter(repo: ICardapioRepository): Router {
+export function cardapioRouter(service: CardapioService): Router {
   const router = Router();
 
   router.get('/', async (_req: Request, res: Response) => {
-    const itens = await repo.listarDisponiveis();
+    const itens = await service.listarItensDisponiveis();
     res.json(itens);
   });
 
