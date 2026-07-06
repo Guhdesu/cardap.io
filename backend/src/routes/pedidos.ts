@@ -1,13 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { Server as SocketServer } from 'socket.io';
-import { IPedidoRepository, IMesaRepository } from '../repositories/interfaces';
+import { PedidoService } from '../services/PedidoService';
 import { NovoPedidoPayload, AtualizarStatusPayload } from '../types';
 
-export function pedidosRouter(
-  pedidoRepo: IPedidoRepository,
-  mesaRepo: IMesaRepository,
-  io: SocketServer,
-): Router {
+export function pedidosRouter(service: PedidoService): Router {
   const router = Router();
 
   // POST /pedidos — cliente envia pedido
@@ -19,20 +14,12 @@ export function pedidosRouter(
       return;
     }
 
-    const itensCriados = await pedidoRepo.criar(comanda_id, itens);
-
-    // Busca dados da comanda para notificar o staff com o número da mesa
-    const comandasAbertas = await pedidoRepo.listarComandasAbertas();
-    const comanda = comandasAbertas.find((c) => c.id === comanda_id);
-
-    // Emite para o painel do staff
-    io.to('staff').emit('novo_pedido', {
-      comanda_id,
-      mesa_numero: comanda?.mesa_numero ?? '?',
-      itens: itensCriados,
-    });
-
-    res.status(201).json(itensCriados);
+    try {
+      const itensCriados = await service.fazerPedido(comanda_id, itens);
+      res.status(201).json(itensCriados);
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
   });
 
   // GET /pedidos/comanda/:comanda_id — cliente consulta seus pedidos
@@ -44,8 +31,12 @@ export function pedidosRouter(
       return;
     }
 
-    const itens = await pedidoRepo.listarPorComanda(comanda_id);
-    res.json(itens);
+    try {
+      const itens = await service.obterPedidosPorComanda(comanda_id);
+      res.json(itens);
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
   });
 
   // PUT /pedidos/:id/status — staff atualiza status de um item
@@ -58,33 +49,22 @@ export function pedidosRouter(
       return;
     }
 
-    const atualizado = await pedidoRepo.atualizarStatus(id, status);
-
-    if (!atualizado) {
-      res.status(404).json({ error: 'Item de pedido não encontrado' });
-      return;
+    try {
+      const atualizado = await service.atualizarStatusItem(id, status);
+      res.json(atualizado);
+    } catch (err) {
+      res.status(404).json({ error: (err as Error).message });
     }
-
-    // Busca a mesa da comanda para notificar o cliente correto
-    const comandas = await pedidoRepo.listarComandasAbertas();
-    const comanda = comandas.find((c) => c.id === atualizado.comanda_id);
-
-    if (comanda) {
-      // Emite para a mesa específica
-      io.to(`mesa:${comanda.mesa_id}`).emit('status_atualizado', {
-        pedido_item_id: atualizado.id,
-        status: atualizado.status,
-        item_nome: atualizado.item_nome,
-      });
-    }
-
-    res.json(atualizado);
   });
 
   // GET /pedidos/staff/comandas — painel do staff
   router.get('/staff/comandas', async (_req: Request, res: Response) => {
-    const comandas = await pedidoRepo.listarComandasAbertas();
-    res.json(comandas);
+    try {
+      const comandas = await service.listarComandasAtivas();
+      res.json(comandas);
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
   });
 
   return router;
