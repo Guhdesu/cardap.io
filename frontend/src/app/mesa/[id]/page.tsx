@@ -44,6 +44,27 @@ export default function MesaPage() {
 
       setComanda(mesaData.comanda);
       setCardapio(cardapioData);
+
+      // Restaurar carrinho do localStorage
+      const savedCarrinho = localStorage.getItem(`carrinho_mesa_${mesaId}`);
+      if (savedCarrinho) {
+        try {
+          setCarrinho(JSON.parse(savedCarrinho));
+        } catch (e) {
+          console.error('[localStorage] Erro ao carregar carrinho:', e);
+        }
+      }
+
+      // Restaurar observacoes do localStorage
+      const savedObs = localStorage.getItem(`observacoes_mesa_${mesaId}`);
+      if (savedObs) {
+        try {
+          setObservacoes(JSON.parse(savedObs));
+        } catch (e) {
+          console.error('[localStorage] Erro ao carregar observações:', e);
+        }
+      }
+
       setLoading(false);
 
       // Carregar pedidos existentes
@@ -69,6 +90,20 @@ export default function MesaPage() {
       getSocket().disconnect();
     };
   }, [mesaId]);
+
+  // Persiste o carrinho no localStorage sempre que mudar
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem(`carrinho_mesa_${mesaId}`, JSON.stringify(carrinho));
+    }
+  }, [carrinho, mesaId, loading]);
+
+  // Persiste observações no localStorage sempre que mudar
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem(`observacoes_mesa_${mesaId}`, JSON.stringify(observacoes));
+    }
+  }, [observacoes, mesaId, loading]);
 
   const itensFiltrados = categoria === 'Todos'
     ? cardapio
@@ -117,6 +152,8 @@ export default function MesaPage() {
     setPedidos((prev) => [...prev, ...novosPedidos]);
     setCarrinho([]);
     setObservacoes({});
+    localStorage.removeItem(`carrinho_mesa_${mesaId}`);
+    localStorage.removeItem(`observacoes_mesa_${mesaId}`);
     setEnviando(false);
     setView('pedidos');
   };
