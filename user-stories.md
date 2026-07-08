@@ -5,9 +5,74 @@
 
 ---
 
-## Contexto do Projeto
+## Contexto e Descrição do Problema
 
-O **cardap.io** é um sistema que permite a clientes de restaurantes/estabelecimentos visualizarem um cardápio digital, realizarem pedidos e acompanharem comandas. A identificação do cliente ocorre por meio de um cartão com QR Code entregue na chegada ao estabelecimento. Administradores e funcionários gerenciam o cardápio, os pedidos e as comandas por uma interface dedicada.
+O **cardap.io** é um sistema que permite a clientes de restaurantes e estabelecimentos visualizarem um cardápio digital, realizarem pedidos e acompanharem comandas. A identificação do cliente ocorre por meio de um cartão com QR Code entregue na chegada ao estabelecimento. Administradores e funcionários gerenciam o cardápio, os pedidos e as comandas por uma interface dedicada.
+
+O problema central que o sistema resolve é a ineficiência no atendimento presencial em horários de pico, onde clientes enfrentam lentidão para visualizar o cardápio, fazer pedidos e solicitar a conta devido à limitação da quantidade de garçons. O sistema dá autonomia ao cliente (que acessa o cardápio digital pelo próprio smartphone) e otimiza a operação do estabelecimento, que passa a receber os pedidos diretamente na cozinha de forma digital e em tempo real.
+
+---
+
+## Requisitos Funcionais
+
+Abaixo estão os Requisitos Funcionais (RF) que o sistema deve atender, derivados das histórias de usuário.
+
+*   **RF01** — O sistema deve permitir a autenticação do cliente via leitura de QR Code vinculado a uma mesa.
+*   **RF02** — O sistema deve bloquear acesso ao cardápio caso o QR Code seja inválido, expirado ou já esteja em uso por outra sessão ativa.
+*   **RF03** — O sistema deve exibir o cardápio digital organizado por categorias, contendo nome, descrição, preço e imagem de cada item.
+*   **RF04** — O sistema deve permitir que o cliente adicione itens a um carrinho virtual, ajuste quantidades e insira observações textuais (ex.: "sem cebola").
+*   **RF05** — O sistema deve registrar os pedidos do cliente, vinculando-os à sua comanda e enviando-os para a interface do estabelecimento em tempo real.
+*   **RF06** — O sistema deve permitir que funcionários visualizem as comandas abertas e atualizem o status dos pedidos ("Pendente", "Em Preparo", "A Caminho", "Entregue").
+*   **RF07** — O sistema deve permitir que o cliente acompanhe o status dos seus pedidos em tempo real na sua própria tela.
+*   **RF08** — O sistema deve possuir uma área administrativa protegida por login e senha (com JWT).
+*   **RF09** — O sistema deve permitir que o administrador gerencie os itens do cardápio (adicionar, editar, remover e marcar como indisponível).
+*   **RF10** — O sistema deve permitir que o administrador faça upload de imagens para os itens do cardápio (formato JPG/PNG, até 5MB).
+*   **RF11** — O sistema deve permitir que o administrador cadastre mesas e gere os QR Codes correspondentes.
+*   **RF12** — O sistema deve permitir que o cliente visualize o total da sua comanda e solicite o fechamento para pagamento.
+
+---
+
+## Descrição do Problema
+
+Restaurantes e estabelecimentos gastronômicos enfrentam gargalos operacionais no fluxo de atendimento presencial: dependência de garçons para anotar pedidos, erros de comunicação entre salão e cozinha, falta de visibilidade do cliente sobre o andamento de seus itens e dificuldade em manter cardápios físicos atualizados com preços, disponibilidade e imagens dos pratos. O **cardap.io** resolve esses problemas oferecendo um sistema web de cardápio digital com gerência de comandas via QR Code, destinado a três perfis de usuário: o **cliente** do restaurante, que escaneia um cartão com QR Code para se autenticar, visualizar o cardápio, realizar pedidos e acompanhar o status em tempo real; o **funcionário**, que gerencia as comandas abertas e atualiza o status de cada pedido pelo painel administrativo; e o **administrador**, que, além das funções de funcionário, cadastra e edita itens do cardápio, gerencia mesas e gera QR Codes para os cartões físicos.
+
+---
+
+## Requisitos Funcionais
+
+Os requisitos funcionais abaixo foram derivados das User Stories (US-01 a US-10) e representam as capacidades que o sistema deve oferecer:
+
+| ID | Requisito Funcional |
+|----|--------------------|
+| **RF01** | O sistema deve permitir que o cliente se autentique escaneando o QR Code do cartão vinculado à mesa, sendo associado automaticamente a uma mesa e a uma comanda sem nenhuma etapa adicional de login. |
+| **RF02** | O sistema deve exibir o cardápio digital completo, organizado em categorias, com nome, descrição, preço e imagem de cada item, permitindo filtragem por categoria e busca por nome. |
+| **RF03** | O sistema deve permitir que itens marcados como indisponíveis sejam exibidos com indicação visual de "Esgotado" e não possam ser adicionados ao pedido. |
+| **RF04** | O sistema deve permitir que o cliente selecione itens do cardápio, ajuste quantidades, adicione observações textuais por item e confirme o pedido, que será vinculado à sua comanda. |
+| **RF05** | O sistema deve exibir todas as comandas abertas em tempo real no painel do funcionário, com número da mesa, itens pedidos, quantidades, horário e status de cada pedido. |
+| **RF06** | O sistema deve permitir que o funcionário altere o status de cada item entre: "Pendente", "Em Preparo", "A Caminho" e "Entregue". |
+| **RF07** | O sistema deve permitir que o administrador cadastre, edite, marque como indisponível e remova itens do cardápio, incluindo upload de imagens nos formatos JPG e PNG com tamanho máximo de 5 MB. |
+| **RF08** | O sistema deve permitir que o cliente acompanhe em tempo real o status de cada item pedido, com atualização automática via WebSocket e notificação visual ao mudar de status. |
+| **RF09** | O sistema deve permitir que o cliente visualize o total da comanda e solicite o fechamento, bloqueando novos pedidos e alertando o funcionário responsável. |
+| **RF10** | O sistema deve permitir que administradores e funcionários façam login com e-mail e senha, recebendo um token JWT com expiração de 8 horas, com acesso ao painel correspondente ao seu perfil. |
+| **RF11** | O sistema deve permitir que o administrador cadastre mesas e gere QR Codes vinculados, exportáveis como PNG para impressão nos cartões físicos. |
+| **RF12** | O sistema deve reativar automaticamente o QR Code de uma mesa após o encerramento da comanda, sem necessidade de gerar um novo token. |
+
+### Rastreabilidade: Requisitos Funcionais ↔ User Stories
+
+| Requisito | User Story de Origem |
+|-----------|---------------------|
+| RF01 | US-01 (Autenticação via QR Code) |
+| RF02 | US-02 (Visualização do cardápio) |
+| RF03 | US-02 (Visualização do cardápio), US-05 (Gerenciamento de itens) |
+| RF04 | US-03 (Realização de pedidos) |
+| RF05 | US-04 (Gerência das comandas) |
+| RF06 | US-04 (Gerência das comandas) |
+| RF07 | US-05 (Gerenciamento de itens), US-06 (Upload de imagens) |
+| RF08 | US-07 (Acompanhamento do status) |
+| RF09 | US-08 (Fechamento de comanda) |
+| RF10 | US-09 (Autenticação admin/funcionário) |
+| RF11 | US-10 (Cadastro de mesas e QR Codes) |
+| RF12 | US-08 (Fechamento de comanda), US-10 (QR Codes) |
 
 ---
 
@@ -251,6 +316,16 @@ O acesso ao painel administrativo deve ser protegido por **autenticação via JW
 
 ---
 
+### RNF-05 — Suportabilidade (Supportability)
+O sistema deve ser compatível com as versões recentes dos principais navegadores (Chrome 120+, Safari 17+, Firefox 120+, Edge) tanto em desktop quanto em dispositivos móveis. A interface web do cliente (frontend) deve adaptar seu layout (responsividade) para suportar resoluções de tela variadas, garantindo uso adequado desde telas de 4 polegadas (smartphones) até telas de 27 polegadas (monitores desktop).
+
+---
+
+### RNF-05 — Suportabilidade (Supportability)
+O sistema deve ser compatível com os navegadores **Google Chrome 120+**, **Safari 17+**, **Firefox 120+** e seus equivalentes em dispositivos móveis (Android e iOS). O frontend deve ser **responsivo**, adaptando-se corretamente a telas com tamanhos entre **4 polegadas** (smartphones compactos) e **27 polegadas** (monitores de mesa do painel administrativo), sem quebra de layout, scroll horizontal indesejado ou perda de funcionalidade em nenhuma resolução dentro dessa faixa.
+
+---
+
 ## Resumo para Apresentação (3 min)
 
 ### 3 User Stories mais prioritárias
@@ -265,3 +340,35 @@ O acesso ao painel administrativo deve ser protegido por **autenticação via JW
 
 ### Principal dificuldade encontrada
 **Priorização e escopo** da US-04 (gerência de comandas): definir o que pertence à gestão de comanda versus ao fechamento (US-08), e até onde vai o papel do funcionário versus do cliente, gerou sobreposição de responsabilidades que exigiu renegociação do escopo de ambas as histórias.
+
+---
+
+## Glossário
+
+*   **Comanda**: Registro que agrupa todos os pedidos realizados por um cliente (ou grupo em uma mesma mesa) durante uma única sessão/visita ao estabelecimento, sendo a base para o fechamento da conta.
+*   **Mesa**: Local físico no restaurante onde os clientes se acomodam. Uma mesa pode ter uma ou mais comandas abertas simultaneamente (se cada pessoa do grupo escanear seu próprio QR Code).
+*   **QR Code**: Código bidimensional impresso em um cartão e vinculado a uma mesa específica. Serve como credencial única para que o cliente acesse o cardápio sem precisar criar conta.
+*   **Sessão do Cliente**: O período de tempo e estado que se inicia quando o cliente escaneia o QR Code e finaliza quando a conta é paga e a comanda é encerrada.
+*   **Pedido**: Uma solicitação individual de um ou mais itens do cardápio enviada de uma vez pelo cliente para a cozinha/bar.
+*   **Item do Cardápio**: Produto (prato, bebida, sobremesa) que está disponível para ser pedido pelo cliente.
+*   **Carrinho**: Espaço temporário na interface do cliente onde ele agrupa itens que deseja pedir antes de confirmar e enviar definitivamente para a cozinha.
+*   **MVP (Minimum Viable Product)**: Produto Mínimo Viável, versão inicial do sistema que contempla apenas as funcionalidades (User Stories) essenciais para seu funcionamento básico (ex.: autenticar, pedir, gerenciar status).
+
+---
+
+## Glossário
+
+| Termo | Definição |
+|-------|-----------|
+| **Cardápio Digital** | Interface web que exibe os itens disponíveis para pedido no estabelecimento, organizados por categorias, com nome, descrição, preço e imagem. |
+| **Carrinho** | Estrutura temporária no lado do cliente que acumula os itens selecionados (com quantidades e observações) antes da confirmação do pedido. Após a confirmação, os itens são convertidos em um `Pedido` vinculado à comanda. |
+| **Comanda** | Registro que agrupa todos os pedidos de uma sessão individual do cliente. Possui um ciclo de vida com três estados: `aberta` (pedidos em andamento), `fechamento_solicitado` (cliente pediu a conta) e `encerrada` (pagamento confirmado pelo funcionário). |
+| **Item do Cardápio** | Produto disponível para pedido (prato, bebida, sobremesa, etc.), com atributos como nome, descrição, preço, categoria, imagem e flag de disponibilidade. |
+| **Item de Pedido** | Registro intermediário que associa um `Item do Cardápio` a um `Pedido`, capturando a quantidade, observação textual e o preço unitário no momento do pedido (snapshot). |
+| **Mesa** | Representação digital de uma mesa física do restaurante, identificada por um número. Pode estar nos estados `livre` ou `ocupada`. |
+| **MVP** | *Minimum Viable Product* (Produto Mínimo Viável) — versão inicial do sistema com as funcionalidades essenciais para validar o conceito: autenticação via QR Code, cardápio digital, realização de pedidos e gerência de comandas. |
+| **Pedido** | Conjunto de itens solicitados pelo cliente em uma única rodada dentro de uma comanda. Cada item de pedido possui status individual que progride de `pendente` → `em_preparo` → `a_caminho` → `entregue`. |
+| **QR Code** | Código bidimensional impresso em um cartão físico entregue ao cliente na chegada ao restaurante. Contém um token UUID único que identifica e autentica o cliente no sistema, vinculando-o a uma mesa e a uma comanda. |
+| **Sessão do Cliente** | Identidade temporária criada quando o cliente escaneia o QR Code. Delimita o acesso ao cardápio e aos pedidos durante a permanência no restaurante. Não há cadastro nem login tradicional — o QR Code é a única credencial. Encerrada quando o funcionário confirma o pagamento. |
+| **Status do Pedido** | Estado atual de um item de pedido no fluxo de atendimento. Segue a progressão: `Pendente` (aguardando preparo) → `Em Preparo` (na cozinha/bar) → `A Caminho` (saindo para a mesa) → `Entregue` (recebido pelo cliente). |
+| **WebSocket** | Protocolo de comunicação bidirecional persistente entre cliente e servidor, utilizado via Socket.io para atualizar o status dos pedidos em tempo real, sem necessidade de recarregar a página. |

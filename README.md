@@ -33,6 +33,39 @@ Administradores e funcionários contam com uma interface dedicada para gerenciar
 
 ---
 
+## Como Rodar
+
+### Pré-requisitos
+
+- Node.js 18+
+- PostgreSQL 15+
+- npm ou yarn
+
+### Backend
+
+```bash
+cd backend
+cp .env.example .env
+# Configure as variáveis de ambiente no .env:
+#   DATABASE_URL  → string de conexão do PostgreSQL
+#   JWT_SECRET    → segredo para assinar tokens JWT
+npm install
+npm run migrate
+npm run dev
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+> O backend roda em `http://localhost:3001` e o frontend em `http://localhost:3000`.
+
+---
+
 ## Arquitetura
 
 ```
@@ -62,23 +95,23 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 
 ## Documentação
 
-- [User Stories e Requisitos](user-stories.md)
-- [Banco de Dados — Entidades e Relacionamentos](docs/database.md)
+### Requisitos e Modelagem
+
 | Documento | Descrição |
 |-----------|-----------|
-| [User Stories e Requisitos](user-stories.md) | 8 User Stories com critérios de aceitação e RNFs |
-| [Diagrama de Classes](docs/diagrama-classes.md) | Modelo de classes do domínio (Mermaid) |
+| [User Stories e Requisitos](user-stories.md) | 10 User Stories com critérios de aceitação e RNFs |
+| [Banco de Dados — Entidades e Relacionamentos](docs/database.md) | Esquema do banco, entidades e relacionamentos |
+| [Diagrama de Classes](docs/diagrama-classes.md) | Modelo de classes do domínio (Mermaid/UML) |
 | [Decisões de Modelagem](docs/decisoes-modelagem.md) | Justificativa das escolhas de design |
-| [Próximos Passos e Planejamento](docs/proximos-passos.md) | Visão geral do roadmap de desenvolvimento |
+
+### Processo e Planejamento
+
+| Documento | Descrição |
+|-----------|-----------|
+| [Gestão do Processo](docs/processo.md) | Metodologia Kanban, backlog, evidências de fluxo e lições aprendidas |
 | [Tarefas de Desenvolvimento](docs/tasks/README.md) | Índice com 7 tarefas detalhadas ordenadas por prioridade |
-
-### Código — Modelos Traduzidos
-
-| Arquivo | Classe |
-|---------|--------|
-| [src/models/ItemCardapio.ts](src/models/ItemCardapio.ts) | Item do cardápio com preço, imagem e disponibilidade |
-| [src/models/Comanda.ts](src/models/Comanda.ts) | Comanda da mesa com ciclo de vida e total |
-| [src/models/types.ts](src/models/types.ts) | Enumerações de status e cargo |
+| [Próximos Passos e Planejamento](docs/proximos-passos.md) | Visão geral do roadmap de desenvolvimento |
+| Plano de Testes | *(em elaboração)* |
 
 ---
 
@@ -88,7 +121,7 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 |------|--------|
 | Gustavo Ferreira | [@Guhdesu](https://github.com/Guhdesu) |
 | Isis Bruna | — |
-| Denny Rodrigues | — | [@DennyCarmo](https://github.com/DennyRodrigues/) |
+| Denny Rodrigues | [@DennyCarmo](https://github.com/DennyRodrigues/) |
 | Johnny Gabriel | — |
 | Saullo Augusto | — |
 
