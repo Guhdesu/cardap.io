@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ComandaComItens, PedidoItem, StatusPedido } from '@/lib/types';
 import { getSocket } from '@/lib/socket';
 import styles from './page.module.css';
@@ -22,15 +22,55 @@ const PROXIMO_STATUS: Record<StatusPedido, StatusPedido | null> = {
 };
 
 const STATUS_BTN_LABEL: Partial<Record<StatusPedido, string>> = {
-  pendente: 'INICIAR PREPARO',
-  preparando: 'MARCAR PRONTO',
-  pronto: 'CONFIRMAR ENTREGA',
+  pendente: 'PREPARAR',
+  preparando: 'PRONTO',
+  pronto: 'ENTREGAR',
+};
+
+// Sintetiza um som de sino de restaurante (ding-dong) usando Web Audio API
+const playNotificationSound = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Primeiro tom (Ding)
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá (A5)
+    gain1.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + 0.5);
+
+    // Segundo tom (Dong) após 180ms
+    setTimeout(() => {
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime); // Nota Mi (E5)
+      gain2.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
+      
+      osc2.start(audioCtx.currentTime);
+      osc2.stop(audioCtx.currentTime + 0.7);
+    }, 180);
+  } catch (err) {
+    console.error('[Audio] Erro ao reproduzir notificação:', err);
+  }
 };
 
 export default function StaffPage() {
   const [comandas, setComandas] = useState<ComandaComItens[]>([]);
   const [novoPedido, setNovoPedido] = useState(false);
   const [conectado, setConectado] = useState(false);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
     // Carga inicial
@@ -49,6 +89,7 @@ export default function StaffPage() {
     socket.on('novo_pedido', (data: { comanda_id: number; mesa_numero: number; itens: PedidoItem[] }) => {
       setNovoPedido(true);
       setTimeout(() => setNovoPedido(false), 4000);
+      playNotificationSound();
 
       setComandas((prev) => {
         const existente = prev.find((c) => c.id === data.comanda_id);
@@ -94,7 +135,74 @@ export default function StaffPage() {
     );
   };
 
-  const totalAtivos = comandas.reduce((sum, c) => sum + c.itens.filter((i) => i.status !== 'entregue').length, 0);
+  // Achata e organiza todos os itens por status
+  const todosItens = comandas.flatMap((c) =>
+    c.itens.map((i) => ({
+      ...i,
+      comanda_id: c.id,
+      mesa_numero: c.mesa_numero,
+    }))
+  );
+
+  const itensPendente = todosItens.filter((i) => i.status === 'pendente');
+  const itensPreparando = todosItens.filter((i) => i.status === 'preparando');
+  const itensPronto = todosItens.filter((i) => i.status === 'pronto');
+  // Para manter a coluna limpa, mostra apenas os últimos 8 entregues
+  const itensEntregue = todosItens
+    .filter((i) => i.status === 'entregue')
+    .slice(-8);
+
+  const totalAtivos = itensPendente.length + itensPreparando.length + itensPronto.length;
+
+  const renderColuna = (titulo: string, emoji: string, itens: typeof todosItens, status: StatusPedido) => {
+    return (
+      <div className={styles.kanbanColumn}>
+        <div className={styles.columnHeader}>
+          <h2 className={styles.columnTitle}>
+            <span>{emoji}</span> {titulo}
+          </h2>
+          <span className={styles.columnBadge}>{itens.length}</span>
+        </div>
+
+        <div className={styles.columnCards}>
+          {itens.length === 0 ? (
+            <div className={styles.emptyCardList}>Fila vazia</div>
+          ) : (
+            itens.map((item) => {
+              const proximo = PROXIMO_STATUS[item.status];
+              return (
+                <div key={item.id} className={`${styles.kanbanCard} ${item.status === 'entregue' ? styles.cardEntregue : ''} animate-fade-in`}>
+                  <div className={styles.cardHeader}>
+                    <span className={styles.cardMesa}>MESA {String(item.mesa_numero).padStart(2, '0')}</span>
+                    <span className={styles.cardId}>#{item.id}</span>
+                  </div>
+                  <div className={styles.cardBody}>
+                    <span className={styles.cardItemNome}>
+                      <span className={styles.cardItemQty}>{item.quantidade}x</span>
+                      {item.item_nome}
+                    </span>
+                    {item.observacao && (
+                      <span className={styles.cardObs}>"{item.observacao}"</span>
+                    )}
+                  </div>
+                  {proximo && (
+                    <div className={styles.cardFooter}>
+                      <button
+                        className={`btn btn-primary ${styles.cardBtn}`}
+                        onClick={() => atualizarStatus(item.id, proximo)}
+                      >
+                        {STATUS_BTN_LABEL[item.status]} →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -102,12 +210,12 @@ export default function StaffPage() {
       <header className={styles.header}>
         <div>
           <span className={styles.logo}>cardap<span className={styles.dot}>.</span>io</span>
-          <h1 className={styles.title}>PAINEL DO STAFF</h1>
+          <h1 className={styles.title}>PAINEL DA COZINHA</h1>
         </div>
         <div className={styles.headerRight}>
           {novoPedido && (
-            <div className={`${styles.novoPedidoAlert} animate-fade-in`}>
-              🔔 NOVO PEDIDO!
+            <div className={`${styles.novoPedidoAlert} animate-pulse`}>
+              🔔 NOVO PEDIDO RECEBIDO!
             </div>
           )}
           <div className={`${styles.status} ${conectado ? styles.statusOn : styles.statusOff}`}>
@@ -115,61 +223,25 @@ export default function StaffPage() {
             {conectado ? 'Conectado' : 'Desconectado'}
           </div>
           {totalAtivos > 0 && (
-            <div className={styles.totalBadge}>{totalAtivos} ativo{totalAtivos !== 1 ? 's' : ''}</div>
+            <div className={styles.totalBadge}>{totalAtivos} item{totalAtivos !== 1 ? 'ns' : ''} ativo{totalAtivos !== 1 ? 's' : ''}</div>
           )}
         </div>
       </header>
 
-      {/* Grid de comandas */}
+      {/* Kanban Board */}
       <main className={styles.main}>
         {comandas.length === 0 ? (
           <div className={styles.empty}>
-            <div className={styles.emptyIcon}>🍽️</div>
-            <p>Nenhum pedido ativo.</p>
-            <span>Aguardando pedidos das mesas...</span>
+            <div className={styles.emptyIcon}>🍳</div>
+            <p>Nenhum pedido ativo na cozinha.</p>
+            <span>Os novos pedidos das mesas aparecerão aqui em tempo real.</span>
           </div>
         ) : (
-          <div className={styles.grid}>
-            {comandas.map((comanda) => (
-              <div key={comanda.id} className={styles.comandaCard}>
-                <div className={styles.comandaHeader}>
-                  <span className={styles.mesaTag}>MESA {String(comanda.mesa_numero).padStart(2, '0')}</span>
-                  <span className={styles.itensCont}>
-                    {comanda.itens.length} {comanda.itens.length === 1 ? 'item' : 'itens'}
-                  </span>
-                </div>
-
-                <div className={styles.itensList}>
-                  {comanda.itens.map((item) => {
-                    const proximo = PROXIMO_STATUS[item.status];
-                    return (
-                      <div key={item.id} className={`${styles.itemRow} ${item.status === 'entregue' ? styles.itemEntregue : ''}`}>
-                        <div className={styles.itemInfo}>
-                          <span className={styles.itemQty}>{item.quantidade}x</span>
-                          <div>
-                            <span className={styles.itemNome}>{item.item_nome}</span>
-                            {item.observacao && (
-                              <span className={styles.itemObs}>"{item.observacao}"</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className={styles.itemActions}>
-                          <span className={`badge badge-${item.status}`}>{STATUS_LABEL[item.status]}</span>
-                          {proximo && (
-                            <button
-                              className={`btn btn-primary ${styles.statusBtn}`}
-                              onClick={() => atualizarStatus(item.id, proximo)}
-                            >
-                              {STATUS_BTN_LABEL[item.status]}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+          <div className={styles.kanbanBoard}>
+            {renderColuna('NOVOS', '📥', itensPendente, 'pendente')}
+            {renderColuna('EM PREPARO', '🔥', itensPreparando, 'preparando')}
+            {renderColuna('PRONTO', '🔔', itensPronto, 'pronto')}
+            {renderColuna('ENTREGUE', '✅', itensEntregue, 'entregue')}
           </div>
         )}
       </main>
