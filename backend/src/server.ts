@@ -6,10 +6,9 @@ import { pool, testConnection } from './db/connection';
 import cors from 'cors';
 
 // ── Repositórios ──────────────────────────────────────────
-// Para trocar para PostgreSQL: alterar estes 3 imports
-import { CardapioRepository } from './repositories/memory/CardapioRepository';
-import { MesaRepository } from './repositories/memory/MesaRepository';
-import { PedidoRepository } from './repositories/memory/PedidoRepository';
+import { CardapioRepository } from './repositories/postgres/CardapioRepository';
+import { MesaRepository } from './repositories/postgres/MesaRepository';
+import { PedidoRepository } from './repositories/postgres/PedidoRepository';
 
 // ── Rotas ─────────────────────────────────────────────────
 import { cardapioRouter } from './routes/cardapio';
@@ -32,7 +31,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 // ── Instâncias dos repositórios ───────────────────────────
 const cardapioRepo = new CardapioRepository();
 const mesaRepo = new MesaRepository();
-const pedidoRepo = new PedidoRepository(cardapioRepo, mesaRepo);
+const pedidoRepo = new PedidoRepository();
 
 // ── App Express & Socket.io ───────────────────────────────
 const app = express();
@@ -85,6 +84,6 @@ setupSocketEvents(io);
 httpServer.listen(PORT, async () => {
   console.log(`🚀 Backend rodando em http://localhost:${PORT}`);
   console.log(`   Frontend esperado em ${FRONTEND_URL}`);
-  console.log(`   Repositórios: memory (mock)`);
+  console.log(`   Repositórios: postgres (persistente)`);
   await testConnection();
 });
