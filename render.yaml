@@ -12,3 +12,15 @@ services:
         value: "*"
       - key: DATABASE_URL
         sync: false  # preenchido manualmente no painel do Render
+
+  - type: web
+    name: cardapio-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://cardap-io-aycc.onrender.com
