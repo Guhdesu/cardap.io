@@ -17,6 +17,7 @@ import { mesasRouter } from './routes/mesas';
 import { pedidosRouter } from './routes/pedidos';
 import { qrcodeRouter } from './routes/qrcode';
 import { authRouter } from './routes/auth';
+import { comandaRouter } from './routes/comanda';
 
 // ── Socket ────────────────────────────────────────────────
 import { setupSocketEvents } from './socket/events';
@@ -54,6 +55,7 @@ app.use(express.json());
 
 // ── Rotas ─────────────────────────────────────────────────
 app.use('/auth', authRouter());
+app.use('/comanda', comandaRouter());
 app.use('/cardapio', cardapioRouter(cardapioService));
 app.use('/mesas', mesasRouter(mesaService));
 app.use('/pedidos', pedidosRouter(pedidoService));

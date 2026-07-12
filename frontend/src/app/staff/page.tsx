@@ -70,10 +70,12 @@ const playNotificationSound = () => {
 export default function StaffPage() {
   const { usuario, carregando: carregandoAuth, logout, authHeader } = useStaffAuth();
   const [comandas, setComandas] = useState<ComandaComItens[]>([]);
+  const [mesas, setMesas] = useState<{ id: number; numero: number }[]>([]);
   const [novoPedido, setNovoPedido] = useState(false);
   const [conectado, setConectado] = useState(false);
   const [activeTab, setActiveTab] = useState<'pedidos' | 'mesas'>('pedidos');
   const isFirstRender = useRef(true);
+  const mesasRef = useRef<{ id: number; numero: number }[]>([]);
 
   useEffect(() => {
     if (carregandoAuth || !usuario) return;
@@ -81,6 +83,14 @@ export default function StaffPage() {
     fetch(`${API}/pedidos/staff/comandas`, { headers: authHeader() })
       .then((r) => r.json())
       .then(setComandas);
+
+    fetch(`${API}/mesas`, { headers: authHeader() })
+      .then((r) => r.json())
+      .then((data) => {
+        setMesas(data);
+        mesasRef.current = data;
+      })
+      .catch((e) => console.error('[Mesas] Erro ao carregar mesas:', e));
 
     // Socket
     const socket = getSocket();
@@ -105,10 +115,11 @@ export default function StaffPage() {
           );
         }
         // Nova comanda
+        const mesaObj = mesasRef.current.find((m) => m.numero === data.mesa_numero);
         return [
           {
             id: data.comanda_id,
-            mesa_id: 0,
+            mesa_id: mesaObj ? mesaObj.id : 0,
             mesa_numero: data.mesa_numero,
             status: 'aberta',
             criado_em: new Date().toISOString(),
@@ -176,19 +187,23 @@ export default function StaffPage() {
               const proximo = PROXIMO_STATUS[item.status];
               return (
                 <div key={item.id} className={`${styles.kanbanCard} ${item.status === 'entregue' ? styles.cardEntregue : ''} animate-fade-in`}>
-                  <div className={styles.cardHeader}>
+                  <div className={item.status === 'entregue' ? styles.cardHeaderEntregue : styles.cardHeader}>
                     <span className={styles.cardMesa}>MESA {String(item.mesa_numero).padStart(2, '0')}</span>
-                    <span className={styles.cardId}>#{item.id}</span>
+                    <span className={styles.cardComanda}>Comanda #{item.comanda_id}</span>
                   </div>
+
                   <div className={styles.cardBody}>
-                    <span className={styles.cardItemNome}>
+                    <div className={styles.cardItemRow}>
                       <span className={styles.cardItemQty}>{item.quantidade}x</span>
-                      {item.item_nome}
-                    </span>
+                      <span className={styles.cardItemName}>{item.item_nome}</span>
+                    </div>
                     {item.observacao && (
-                      <span className={styles.cardObs}>"{item.observacao}"</span>
+                      <div className={styles.cardObs}>
+                        💡 {item.observacao}
+                      </div>
                     )}
                   </div>
+
                   {proximo && (
                     <div className={styles.cardFooter}>
                       <button
@@ -208,25 +223,20 @@ export default function StaffPage() {
     );
   };
 
-  if (carregandoAuth) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem' }}>CARREGANDO...</span>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.page}>
       {/* Header */}
       <header className={styles.header}>
-        <div>
-          <span className={styles.logo}>cardap<span className={styles.dot}>.</span>io</span>
-          <h1 className={styles.title}>PAINEL DA COZINHA</h1>
+        <div className={styles.headerBrand}>
+          <span className={styles.logo}>
+            cardap<span className={styles.dot}>.</span>io
+          </span>
+          <span className={styles.panelBadge}>STAFF</span>
         </div>
-        <div className={styles.headerRight}>
+
+        <div className={styles.headerActions}>
           {novoPedido && (
-            <div className={`${styles.novoPedidoAlert} animate-pulse`}>
+            <div className={`${styles.toast} animate-pulse`}>
               🔔 NOVO PEDIDO RECEBIDO!
             </div>
           )}
@@ -265,52 +275,84 @@ export default function StaffPage() {
 
       {/* Conteúdo Principal */}
       <main className={styles.main}>
-        {comandas.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>🍳</div>
-            <p>Nenhum pedido ativo no momento.</p>
-            <span>Os novos pedidos das mesas aparecerão aqui em tempo real.</span>
-          </div>
-        ) : activeTab === 'mesas' ? (
+        {activeTab === 'mesas' ? (
           <div className={styles.mesasGrid}>
-            {comandas.map((comanda) => {
-              const totalComanda = comanda.itens.reduce((acc, item) => {
-                const itemPreco = item.preco ?? 0;
-                return acc + (item.quantidade * itemPreco);
+            {mesas.map((mesa) => {
+              const comandasDaMesa = comandas.filter(
+                (c) => c.mesa_id === mesa.id || c.mesa_numero === mesa.numero
+              );
+              const isOcupada = comandasDaMesa.length > 0;
+              
+              const totalMesa = comandasDaMesa.reduce((sumMesa, comanda) => {
+                const totalComanda = comanda.itens.reduce(
+                  (sumComanda, item) => sumComanda + (item.quantidade * (item.preco ?? 0)),
+                  0
+                );
+                return sumMesa + totalComanda;
               }, 0);
 
               return (
-                <div key={comanda.id} className={`${styles.mesaCard} animate-fade-in`}>
+                <div key={mesa.id} className={`${styles.mesaCard} animate-fade-in`}>
                   <div className={styles.mesaCardHeader}>
                     <div>
-                      <h3 className={styles.mesaCardTitle}>MESA {String(comanda.mesa_numero).padStart(2, '0')}</h3>
-                      <span className={styles.mesaCardSub}>Comanda #{comanda.id}</span>
+                      <h3 className={styles.mesaCardTitle}>MESA {String(mesa.numero).padStart(2, '0')}</h3>
+                      <span className={styles.mesaCardSub}>
+                        {isOcupada ? `${comandasDaMesa.length} comanda(s) ativa(s)` : 'Sem comandas ativas'}
+                      </span>
                     </div>
-                    <span className={styles.mesaCardStatusBadge}>Ativa</span>
+                    <span className={`${styles.mesaCardStatusBadge} ${isOcupada ? styles.mesaOcupada : styles.mesaLivre}`}>
+                      {isOcupada ? 'Ocupada' : 'Livre'}
+                    </span>
                   </div>
 
                   <div className={styles.mesaCardBody}>
-                    <h4 className={styles.itemsTitle}>Itens Consumidos:</h4>
-                    <div className={styles.mesaCardItemsList}>
-                      {comanda.itens.map((item) => (
-                        <div key={item.id} className={styles.mesaCardItem}>
-                          <span className={styles.mesaCardItemQty}>{item.quantidade}x</span>
-                          <span className={styles.mesaCardItemName}>{item.item_nome}</span>
-                          <span className={styles.mesaCardItemPrice}>
-                            R$ {((item.preco ?? 0) * item.quantidade).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    {!isOcupada ? (
+                      <p className={styles.emptyMesaText}>Mesa livre no momento.</p>
+                    ) : (
+                      <div className={styles.comandasMesaList}>
+                        {comandasDaMesa.map((comanda) => {
+                          const totalComanda = comanda.itens.reduce(
+                            (sum, item) => sum + (item.quantidade * (item.preco ?? 0)),
+                            0
+                          );
+
+                          return (
+                            <div key={comanda.id} className={styles.comandaMesaContainer}>
+                              <div className={styles.comandaMesaHeader}>
+                                <span className={styles.comandaMesaTitle}>Comanda #{comanda.id}</span>
+                                <span className={styles.comandaMesaTotal}>R$ {totalComanda.toFixed(2)}</span>
+                              </div>
+                              <div className={styles.comandaMesaItens}>
+                                {comanda.itens.map((item) => (
+                                  <div key={item.id} className={styles.mesaCardItem}>
+                                    <span className={styles.mesaCardItemQty}>{item.quantidade}x</span>
+                                    <span className={styles.mesaCardItemName}>{item.item_nome}</span>
+                                    <span className={styles.mesaCardItemPrice}>
+                                      R$ {((item.preco ?? 0) * item.quantidade).toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles.mesaCardFooter}>
-                    <span className={styles.totalLabel}>TOTAL A PAGAR:</span>
-                    <span className={styles.totalValue}>R$ {totalComanda.toFixed(2)}</span>
+                    <span className={styles.totalLabel}>TOTAL CONSOLIDADO:</span>
+                    <span className={styles.totalValue}>R$ {totalMesa.toFixed(2)}</span>
                   </div>
                 </div>
               );
             })}
+          </div>
+        ) : comandas.length === 0 ? (
+          <div className={styles.empty}>
+            <div className={styles.emptyIcon}>🍳</div>
+            <p>Nenhum pedido ativo no momento.</p>
+            <span>Os novos pedidos das mesas aparecerão aqui em tempo real.</span>
           </div>
         ) : (
           <div className={styles.kanbanBoard}>

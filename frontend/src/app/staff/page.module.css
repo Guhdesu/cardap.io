@@ -499,5 +499,66 @@
   color: white;
 }
 
+/* Mesas Ativas - Estilos adicionais */
+.mesaLivre {
+  background: #E8F5E9 !important;
+  color: #2E7D32 !important;
+}
+
+.mesaOcupada {
+  background: #FFEBEE !important;
+  color: #C62828 !important;
+}
+
+.emptyMesaText {
+  color: var(--color-ink-soft);
+  font-size: 0.9rem;
+  margin: 12px 0;
+  text-align: center;
+  font-style: italic;
+}
+
+.comandasMesaList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comandaMesaContainer {
+  border: 1.5px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+  box-shadow: 2px 2px 0px var(--color-ink);
+}
+
+.comandaMesaHeader {
+  background: var(--color-ink);
+  color: var(--color-white);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comandaMesaTitle {
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.comandaMesaTotal {
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+
+.comandaMesaItens {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-white);
+}
+
 
 
