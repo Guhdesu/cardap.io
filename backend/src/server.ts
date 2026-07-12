@@ -38,7 +38,7 @@ const app = express();
 const httpServer = createServer(app);
 
 const io = new SocketServer(httpServer, {
-  cors: { origin: FRONTEND_URL, methods: ['GET', 'POST'] },
+  cors: { origin: '*', methods: ['GET', 'POST'] },
 });
 
 // ── Instâncias dos serviços ────────────────────────────────
@@ -46,7 +46,7 @@ const cardapioService = new CardapioService(cardapioRepo);
 const mesaService = new MesaService(mesaRepo);
 const pedidoService = new PedidoService(pedidoRepo, io);
 
-app.use(cors({ origin: FRONTEND_URL }));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 // ── Rotas ─────────────────────────────────────────────────
