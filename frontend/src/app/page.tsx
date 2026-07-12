@@ -6,6 +6,11 @@ import styles from './page.module.css';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+const MESA_CONFIG = {
+  MIN: 1,
+  MAX: 8,
+} as const;
+
 export default function Home() {
   const [mesaEscolhida, setMesaEscolhida] = useState<number>(1);
   const [mesaNum, setMesaNum] = useState('');
@@ -13,13 +18,13 @@ export default function Home() {
 
   // Escolhe uma mesa aleatória ao carregar para evitar hydration mismatch
   useEffect(() => {
-    setMesaEscolhida(Math.floor(Math.random() * 20) + 1);
+    setMesaEscolhida(Math.floor(Math.random() * MESA_CONFIG.MAX) + MESA_CONFIG.MIN);
   }, []);
 
   const handleRandomize = () => {
     let nextMesa;
     do {
-      nextMesa = Math.floor(Math.random() * 20) + 1;
+      nextMesa = Math.floor(Math.random() * MESA_CONFIG.MAX) + MESA_CONFIG.MIN;
     } while (nextMesa === mesaEscolhida);
     setMesaEscolhida(nextMesa);
   };
@@ -67,13 +72,6 @@ export default function Home() {
           PEDIR NA MESA {mesaEscolhida.toString().padStart(2, '0')}
         </button>
 
-        <button 
-          onClick={handleRandomize} 
-          className="btn btn-outline"
-          style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--color-ink)' }}
-        >
-          GERAR OUTRA MESA ALEATÓRIA
-        </button>
       </div>
 
       <div className={styles.divider}>
@@ -87,9 +85,9 @@ export default function Home() {
             type="number"
             inputMode="numeric"
             pattern="[0-9]*"
-            min="1"
-            max="20"
-            placeholder="Número da mesa (1 a 20)"
+            min={MESA_CONFIG.MIN}
+            max={MESA_CONFIG.MAX}
+            placeholder={`Número da mesa (${MESA_CONFIG.MIN} a ${MESA_CONFIG.MAX})`}
             className={styles.mesaInput}
             value={mesaNum}
             onChange={(e) => setMesaNum(e.target.value)}
