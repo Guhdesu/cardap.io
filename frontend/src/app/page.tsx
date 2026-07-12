@@ -1,14 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function Home() {
+  const [mesaEscolhida, setMesaEscolhida] = useState<number>(1);
   const [mesaNum, setMesaNum] = useState('');
   const router = useRouter();
+
+  // Escolhe uma mesa aleatória ao carregar para evitar hydration mismatch
+  useEffect(() => {
+    setMesaEscolhida(Math.floor(Math.random() * 20) + 1);
+  }, []);
+
+  const handleRandomize = () => {
+    let nextMesa;
+    do {
+      nextMesa = Math.floor(Math.random() * 20) + 1;
+    } while (nextMesa === mesaEscolhida);
+    setMesaEscolhida(nextMesa);
+  };
 
   const handleAccess = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +42,16 @@ export default function Home() {
 
       <div className={styles.demoSection}>
         <h2 className={styles.sectionTitle}>ACESSAR MESA</h2>
-        <p className={styles.demoSub}>Escaneie o QR Code abaixo com seu celular para pedir na Mesa 01:</p>
+        <p className={styles.demoSub}>
+          Escaneie o QR Code abaixo com seu celular para pedir na Mesa {mesaEscolhida.toString().padStart(2, '0')}:
+        </p>
         
         <div className={styles.qrContainer}>
           <img
-            src={`${API}/qrcode/1`}
-            alt="QR Code Mesa 1"
+            src={`${API}/qrcode/${mesaEscolhida}`}
+            alt={`QR Code Mesa ${mesaEscolhida}`}
             className={styles.qrImage}
+            key={mesaEscolhida} // Força recarregar a imagem do QR Code ao mudar a mesa
           />
           <div className={`${styles.qrCorner} ${styles.topLeft}`}></div>
           <div className={`${styles.qrCorner} ${styles.topRight}`}></div>
@@ -43,22 +60,19 @@ export default function Home() {
         </div>
 
         <button 
-          onClick={() => router.push('/mesa/1')} 
+          onClick={() => router.push(`/mesa/${mesaEscolhida}`)} 
           className="btn btn-primary"
           style={{ width: '100%', justifyContent: 'center' }}
         >
-          PEDIR NA MESA 01
+          PEDIR NA MESA {mesaEscolhida.toString().padStart(2, '0')}
         </button>
 
         <button 
-          onClick={() => {
-            const randomNum = Math.floor(Math.random() * 20) + 1;
-            router.push(`/mesa/${randomNum}`);
-          }} 
+          onClick={handleRandomize} 
           className="btn btn-outline"
           style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--color-ink)' }}
         >
-          IR PARA UMA MESA ALEATÓRIA
+          GERAR OUTRA MESA ALEATÓRIA
         </button>
       </div>
 
