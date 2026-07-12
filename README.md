@@ -69,6 +69,7 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 | [User Stories e Requisitos](user-stories.md) | 8 User Stories com critérios de aceitação e RNFs |
 | [Diagrama de Classes](docs/diagrama-classes.md) | Modelo de classes do domínio (Mermaid) |
 | [Decisões de Modelagem](docs/decisoes-modelagem.md) | Justificativa das escolhas de design |
+| [Próximos Passos e Planejamento](docs/proximos-passos.md) | Planejamento de novas features (autenticação, checkout, CRUD) |
 
 ### Código — Modelos Traduzidos
 
