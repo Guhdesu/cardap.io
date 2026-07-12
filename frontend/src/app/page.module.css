@@ -43,5 +43,38 @@
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-soft);
+}
+
+.mesaInput {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  text-align: center;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  color: var(--color-ink);
+  background: var(--color-white);
+  box-shadow: 4px 4px 0px var(--color-ink);
+  outline: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.mesaInput:focus {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px var(--color-ink);
+  border-color: var(--color-accent);
 }
