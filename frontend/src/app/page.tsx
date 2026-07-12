@@ -27,8 +27,8 @@ export default function Home() {
       </div>
 
       <div className={styles.demoSection}>
-        <h2 className={styles.sectionTitle}>SIMULADOR DE MESA</h2>
-        <p className={styles.demoSub}>Escaneie com a câmera do seu celular para testar a experiência na Mesa 01:</p>
+        <h2 className={styles.sectionTitle}>ACESSAR MESA</h2>
+        <p className={styles.demoSub}>Escaneie o QR Code abaixo com seu celular para pedir na Mesa 01:</p>
         
         <div className={styles.qrContainer}>
           <img
@@ -47,7 +47,7 @@ export default function Home() {
           className="btn btn-primary"
           style={{ width: '100%', justifyContent: 'center' }}
         >
-          ABRIR MESA 01 NESTE NAVEGADOR
+          PEDIR NA MESA 01
         </button>
 
         <button 
@@ -58,12 +58,12 @@ export default function Home() {
           className="btn btn-outline"
           style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--color-ink)' }}
         >
-          🔀 SIMULAR MESA ALEATÓRIA
+          IR PARA UMA MESA ALEATÓRIA
         </button>
       </div>
 
       <div className={styles.divider}>
-        <span>OU DIGITE OUTRA MESA</span>
+        <span>OU INFORME O NÚMERO DA MESA</span>
       </div>
 
       <form onSubmit={handleAccess} className={styles.actions}>
@@ -75,7 +75,7 @@ export default function Home() {
             pattern="[0-9]*"
             min="1"
             max="8"
-            placeholder="Nº da mesa (1 a 8)"
+            placeholder="Número da mesa (ex: 2)"
             className={styles.mesaInput}
             value={mesaNum}
             onChange={(e) => setMesaNum(e.target.value)}
@@ -84,7 +84,7 @@ export default function Home() {
         </div>
 
         <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-          ACESSAR CARDÁPIO
+          VER CARDÁPIO
         </button>
       </form>
     </main>
