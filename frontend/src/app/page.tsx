@@ -52,7 +52,7 @@ export default function Home() {
 
         <button 
           onClick={() => {
-            const randomNum = Math.floor(Math.random() * 8) + 1;
+            const randomNum = Math.floor(Math.random() * 20) + 1;
             router.push(`/mesa/${randomNum}`);
           }} 
           className="btn btn-outline"
@@ -74,8 +74,8 @@ export default function Home() {
             inputMode="numeric"
             pattern="[0-9]*"
             min="1"
-            max="8"
-            placeholder="Número da mesa (ex: 2)"
+            max="20"
+            placeholder="Número da mesa (1 a 20)"
             className={styles.mesaInput}
             value={mesaNum}
             onChange={(e) => setMesaNum(e.target.value)}
