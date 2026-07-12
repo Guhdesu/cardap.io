@@ -30,58 +30,73 @@ export default function MesaPage() {
   const [loading, setLoading] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [observacoes, setObservacoes] = useState<Record<number, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   // Inicialização
   useEffect(() => {
     const init = async () => {
-      const [mesaRes, cardapioRes] = await Promise.all([
-        fetch(`${API}/mesas/${mesaId}`),
-        fetch(`${API}/cardapio`),
-      ]);
+      try {
+        const [mesaRes, cardapioRes] = await Promise.all([
+          fetch(`${API}/mesas/${mesaId}`),
+          fetch(`${API}/cardapio`),
+        ]);
 
-      const mesaData = await mesaRes.json();
-      const cardapioData = await cardapioRes.json();
-
-      setComanda(mesaData.comanda);
-      setCardapio(cardapioData);
-
-      // Restaurar carrinho do localStorage
-      const savedCarrinho = localStorage.getItem(`carrinho_mesa_${mesaId}`);
-      if (savedCarrinho) {
-        try {
-          setCarrinho(JSON.parse(savedCarrinho));
-        } catch (e) {
-          console.error('[localStorage] Erro ao carregar carrinho:', e);
+        if (!mesaRes.ok) {
+          const errData = await mesaRes.json();
+          throw new Error(errData.error || 'Erro ao carregar mesa');
         }
-      }
 
-      // Restaurar observacoes do localStorage
-      const savedObs = localStorage.getItem(`observacoes_mesa_${mesaId}`);
-      if (savedObs) {
-        try {
-          setObservacoes(JSON.parse(savedObs));
-        } catch (e) {
-          console.error('[localStorage] Erro ao carregar observações:', e);
+        const mesaData = await mesaRes.json();
+        const cardapioData = await cardapioRes.json();
+
+        setComanda(mesaData.comanda);
+        setCardapio(cardapioData);
+
+        // Restaurar carrinho do localStorage
+        const savedCarrinho = localStorage.getItem(`carrinho_mesa_${mesaId}`);
+        if (savedCarrinho) {
+          try {
+            setCarrinho(JSON.parse(savedCarrinho));
+          } catch (e) {
+            console.error('[localStorage] Erro ao carregar carrinho:', e);
+          }
         }
+
+        // Restaurar observacoes do localStorage
+        const savedObs = localStorage.getItem(`observacoes_mesa_${mesaId}`);
+        if (savedObs) {
+          try {
+            setObservacoes(JSON.parse(savedObs));
+          } catch (e) {
+            console.error('[localStorage] Erro ao carregar observações:', e);
+          }
+        }
+
+        // Carregar pedidos existentes se a comanda existir
+        if (mesaData.comanda && mesaData.comanda.id) {
+          const pedidosRes = await fetch(`${API}/pedidos/comanda/${mesaData.comanda.id}`);
+          if (pedidosRes.ok) {
+            const pedidosData = await pedidosRes.json();
+            setPedidos(pedidosData);
+          }
+        }
+
+        // Socket
+        const socket = getSocket();
+        socket.connect();
+        socket.emit('join_mesa', { mesaId });
+
+        socket.on('status_atualizado', (data: { pedido_item_id: number; status: StatusPedido; item_nome: string }) => {
+          setPedidos((prev) =>
+            prev.map((p) => (p.id === data.pedido_item_id ? { ...p, status: data.status } : p))
+          );
+        });
+      } catch (err) {
+        console.error('[init] Falha na inicialização:', err);
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
-
-      // Carregar pedidos existentes
-      const pedidosRes = await fetch(`${API}/pedidos/comanda/${mesaData.comanda.id}`);
-      const pedidosData = await pedidosRes.json();
-      setPedidos(pedidosData);
-
-      // Socket
-      const socket = getSocket();
-      socket.connect();
-      socket.emit('join_mesa', { mesaId });
-
-      socket.on('status_atualizado', (data: { pedido_item_id: number; status: StatusPedido; item_nome: string }) => {
-        setPedidos((prev) =>
-          prev.map((p) => (p.id === data.pedido_item_id ? { ...p, status: data.status } : p))
-        );
-      });
     };
 
     init();
@@ -168,6 +183,23 @@ export default function MesaPage() {
       <div className={styles.loading}>
         <div className={styles.loadingDot} />
         <span>Carregando cardápio...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.errorContainer}>
+        <div className={styles.errorIcon}>⚠️</div>
+        <h2 className={styles.errorTitle}>Ops! Algo deu errado</h2>
+        <p className={styles.errorMessage}>{error}</p>
+        <button
+          className="btn btn-primary"
+          onClick={() => window.location.href = '/'}
+          style={{ marginTop: '20px', width: '100%', justifyContent: 'center' }}
+        >
+          Voltar para a Página Inicial
+        </button>
       </div>
     );
   }

@@ -298,3 +298,35 @@
   font-size: 1.1rem;
   color: white;
 }
+
+/* Error State */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  padding: 32px;
+  text-align: center;
+  gap: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--color-bg);
+}
+
+.errorIcon {
+  font-size: 4rem;
+}
+
+.errorTitle {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+
+.errorMessage {
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
