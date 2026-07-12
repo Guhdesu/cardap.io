@@ -285,3 +285,173 @@
   box-shadow: 3px 3px 0px var(--color-ink) !important;
 }
 
+/* Tabs */
+.tabsContainer {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 0 32px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tabButton {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 12px 24px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-ink);
+  box-shadow: 4px 4px 0px var(--color-ink);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.tabButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px var(--color-ink);
+}
+
+.tabButtonActive {
+  background: var(--color-accent);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--color-ink);
+}
+
+.tabButtonActive:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--color-ink);
+}
+
+/* Mesas Grid */
+.mesasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  padding-bottom: 40px;
+}
+
+.mesaCard {
+  background: var(--color-white);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: 6px 6px 0px var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.mesaCard:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px var(--color-ink);
+}
+
+.mesaCardHeader {
+  background: var(--color-ink);
+  color: var(--color-white);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--color-ink);
+}
+
+.mesaCardTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--color-white);
+  letter-spacing: 0.05em;
+}
+
+.mesaCardSub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.mesaCardStatusBadge {
+  background: var(--color-accent);
+  color: var(--color-ink);
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.mesaCardBody {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemsTitle {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.mesaCardItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mesaCardItem {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.mesaCardItemQty {
+  font-weight: 800;
+  color: var(--color-accent);
+  width: 28px;
+}
+
+.mesaCardItemName {
+  flex: 1;
+}
+
+.mesaCardItemPrice {
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+
+.mesaCardFooter {
+  background: #FFF9F6;
+  border-top: 2px solid var(--color-ink);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totalLabel {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.totalValue {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--color-ink);
+}
+
+

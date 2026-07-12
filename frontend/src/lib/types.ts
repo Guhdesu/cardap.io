@@ -32,6 +32,7 @@ export interface PedidoItem {
   observacao: string;
   status: StatusPedido;
   criado_em: string;
+  preco?: number;
 }
 
 export interface ComandaComItens extends Comanda {

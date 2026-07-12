@@ -70,6 +70,7 @@ export default function StaffPage() {
   const [comandas, setComandas] = useState<ComandaComItens[]>([]);
   const [novoPedido, setNovoPedido] = useState(false);
   const [conectado, setConectado] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pedidos' | 'mesas'>('pedidos');
   const isFirstRender = useRef(true);
 
   useEffect(() => {
@@ -228,13 +229,70 @@ export default function StaffPage() {
         </div>
       </header>
 
-      {/* Kanban Board */}
+      {/* Navegação por Abas */}
+      <div className={styles.tabsContainer}>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'pedidos' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('pedidos')}
+        >
+          📋 FILA DE PREPARAÇÃO
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'mesas' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('mesas')}
+        >
+          🪑 MESAS ATIVAS
+        </button>
+      </div>
+
+      {/* Conteúdo Principal */}
       <main className={styles.main}>
         {comandas.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🍳</div>
-            <p>Nenhum pedido ativo na cozinha.</p>
+            <p>Nenhum pedido ativo no momento.</p>
             <span>Os novos pedidos das mesas aparecerão aqui em tempo real.</span>
+          </div>
+        ) : activeTab === 'mesas' ? (
+          <div className={styles.mesasGrid}>
+            {comandas.map((comanda) => {
+              const totalComanda = comanda.itens.reduce((acc, item) => {
+                const itemPreco = item.preco ?? 0;
+                return acc + (item.quantidade * itemPreco);
+              }, 0);
+
+              return (
+                <div key={comanda.id} className={`${styles.mesaCard} animate-fade-in`}>
+                  <div className={styles.mesaCardHeader}>
+                    <div>
+                      <h3 className={styles.mesaCardTitle}>MESA {String(comanda.mesa_numero).padStart(2, '0')}</h3>
+                      <span className={styles.mesaCardSub}>Comanda #{comanda.id}</span>
+                    </div>
+                    <span className={styles.mesaCardStatusBadge}>Ativa</span>
+                  </div>
+
+                  <div className={styles.mesaCardBody}>
+                    <h4 className={styles.itemsTitle}>Itens Consumidos:</h4>
+                    <div className={styles.mesaCardItemsList}>
+                      {comanda.itens.map((item) => (
+                        <div key={item.id} className={styles.mesaCardItem}>
+                          <span className={styles.mesaCardItemQty}>{item.quantidade}x</span>
+                          <span className={styles.mesaCardItemName}>{item.item_nome}</span>
+                          <span className={styles.mesaCardItemPrice}>
+                            R$ {((item.preco ?? 0) * item.quantidade).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.mesaCardFooter}>
+                    <span className={styles.totalLabel}>TOTAL A PAGAR:</span>
+                    <span className={styles.totalValue}>R$ {totalComanda.toFixed(2)}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className={styles.kanbanBoard}>
