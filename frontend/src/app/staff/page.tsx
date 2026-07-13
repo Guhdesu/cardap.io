@@ -254,6 +254,32 @@ export default function StaffPanel() {
     }
   };
 
+  const liberarMesa = async (mesaId: number, mesaNumero: number, comandasMesa: any[]) => {
+    if (comandasMesa.length === 0) return;
+    if (!window.confirm(`Tem certeza que deseja liberar a MESA ${String(mesaNumero).padStart(2, '0')}? Todas as comandas ativas desta mesa serão encerradas.`)) {
+      return;
+    }
+
+    try {
+      await Promise.all(
+        comandasMesa.map((c) =>
+          fetch(`${API}/comanda/${c.id}/encerrar`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeader(),
+            },
+          })
+        )
+      );
+
+      const comandaIds = comandasMesa.map((c) => c.id);
+      setComandas((prev) => prev.filter((c) => !comandaIds.includes(c.id)));
+    } catch (err: any) {
+      alert('Erro ao liberar mesa.');
+    }
+  };
+
   const abrirCriarItem = () => {
     setItemEditando(null);
     setModalNome('');
@@ -687,16 +713,28 @@ export default function StaffPanel() {
                                 ))}
                               </div>
 
-                              {comanda.status === 'fechamento_solicitado' && (
-                                <div className={styles.comandaMesaAcoes}>
+                              <div className={styles.comandaMesaAcoes}>
+                                {comanda.status === 'fechamento_solicitado' ? (
                                   <button
                                     className={`btn btn-primary ${styles.confirmarPagamentoBtn}`}
                                     onClick={() => confirmarPagamento(comanda.id)}
                                   >
                                     💵 CONFIRMAR PAGAMENTO & ENCERRAR
                                   </button>
-                                </div>
-                              )}
+                                ) : (
+                                  <button
+                                    className="btn btn-outline"
+                                    style={{ width: '100%', borderColor: 'var(--color-ink-soft)', color: 'var(--color-ink-soft)', fontSize: '0.8rem', padding: '6px', fontWeight: 700 }}
+                                    onClick={() => {
+                                      if (window.confirm(`Deseja encerrar manualmente a comanda #${comanda.id}?`)) {
+                                        confirmarPagamento(comanda.id);
+                                      }
+                                    }}
+                                  >
+                                    ENCERRAR COMANDA
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
@@ -705,9 +743,18 @@ export default function StaffPanel() {
                   </div>
 
                   {isOcupada && (
-                    <div className={styles.mesaCardFooter}>
-                      <span>Total Consolidado:</span>
-                      <strong>R$ {totalMesa.toFixed(2).replace('.', ',')}</strong>
+                    <div className={styles.mesaCardFooter} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                        <span>Total Consolidado:</span>
+                        <strong>R$ {totalMesa.toFixed(2).replace('.', ',')}</strong>
+                      </div>
+                      <button
+                        className="btn btn-outline"
+                        style={{ width: '100%', borderColor: 'var(--color-accent)', color: 'var(--color-accent)', fontWeight: 800, padding: '8px', fontSize: '0.85rem' }}
+                        onClick={() => liberarMesa(mesa.id, mesa.numero, comandasDaMesa)}
+                      >
+                        🚪 LIBERAR MESA / ENCERRAR TODAS
+                      </button>
                     </div>
                   )}
                 </div>

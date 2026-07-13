@@ -1,5 +1,6 @@
 import { ISessaoRepository, IMesaRepository } from '../repositories/interfaces';
 import { SessaoCliente, QRCode } from '../types';
+import { pool } from '../db/connection';
 
 export class SessaoService {
   constructor(
@@ -7,7 +8,11 @@ export class SessaoService {
     private mesaRepo: IMesaRepository
   ) {}
 
-  async entrarComToken(token: string): Promise<{ sessao: SessaoCliente; mesaNumero: number }> {
+  async entrarComToken(
+    token: string,
+    comandaAcao?: 'juntar' | 'nova',
+    targetComandaId?: number
+  ): Promise<{ sessao: SessaoCliente; mesaNumero: number }> {
     const qrCode = await this.sessaoRepo.buscarTokenAtivo(token);
     if (!qrCode) {
       throw new Error('Token inválido ou expirado');
@@ -21,8 +26,19 @@ export class SessaoService {
     // Cria a sessão do cliente
     const sessao = await this.sessaoRepo.criarSessao(qrCode.id, qrCode.mesa_id);
 
-    // Obtém ou cria a comanda ativa para esta mesa vinculando com a sessão
-    await this.mesaRepo.obterOuCriarComanda(qrCode.mesa_id, sessao.id);
+    if (comandaAcao === 'nova') {
+      // Cria uma nova comanda obrigatoriamente
+      await pool.query(
+        'INSERT INTO comandas (mesa_id, sessao_id, status, criado_em) VALUES ($1, $2, $3, NOW())',
+        [qrCode.mesa_id, sessao.id, 'aberta']
+      );
+    } else if (comandaAcao === 'juntar' && targetComandaId) {
+      // Associa a comanda específica à sessão
+      await pool.query('UPDATE comandas SET sessao_id = $1 WHERE id = $2', [sessao.id, targetComandaId]);
+    } else {
+      // Obtém ou cria a comanda ativa para esta mesa vinculando com a sessão
+      await this.mesaRepo.obterOuCriarComanda(qrCode.mesa_id, sessao.id);
+    }
 
     return { sessao, mesaNumero: mesa.numero };
   }
@@ -37,5 +53,13 @@ export class SessaoService {
 
   async obterQRCodePorMesa(mesaId: number): Promise<QRCode | null> {
     return this.sessaoRepo.obterQRCodePorMesa(mesaId);
+  }
+
+  async buscarTokenAtivo(token: string): Promise<QRCode | null> {
+    return this.sessaoRepo.buscarTokenAtivo(token);
+  }
+
+  async buscarMesaPorId(mesaId: number) {
+    return this.mesaRepo.buscarPorId(mesaId);
   }
 }
