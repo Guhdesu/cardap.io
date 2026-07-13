@@ -3,7 +3,7 @@
 > **Prioridade:** 🔴 Alta  
 > **User Story:** US-01, US-10  
 > **Estimativa:** 5–8 pontos  
-> **Dependências:** Nenhuma — pode iniciar em paralelo com TAREFA-01.
+> **Dependências:** TAREFA-03 (separação Mesa/Comanda) — a sessão real é construída sobre a fundação arquitetural correta.
 
 ---
 
@@ -72,4 +72,4 @@ Implementar a autenticação zero-fricção do cliente via token único embutido
 
 - O `token` do QR Code é um `UUID v4` gerado no banco — nunca exposto na lógica de negócio, apenas na URL do QR Code.
 - A sessão do cliente **não é um JWT** — é um registro no banco que permite revogar acesso instantaneamente ao encerrar a comanda.
-- A rota atual `/mesa/[numero]` pode coexistir temporariamente durante a transição, mas deve ser deprecada após TAREFA-03 ser concluída.
+- A rota atual `/mesa/[numero]` pode coexistir temporariamente durante a transição, mas deve ser deprecada após esta tarefa ser concluída (TAREFA-03 já terá refatorado a separação das rotas).

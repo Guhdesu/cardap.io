@@ -3,7 +3,7 @@
 > **Prioridade:** 🔴 Alta  
 > **User Story:** US-01, US-08  
 > **Estimativa:** 8–13 pontos  
-> **Dependências:** TAREFA-02 (sessão do cliente) deve estar implementada ou em paralelo.
+> **Dependências:** Nenhuma — pode iniciar em paralelo com TAREFA-01. TAREFA-02 depende desta.
 
 ---
 

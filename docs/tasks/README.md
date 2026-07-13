@@ -10,8 +10,8 @@
 | # | Tarefa | Prioridade | US Relacionada | Estimativa | Depende de |
 |---|--------|-----------|----------------|-----------|------------|
 | [TAREFA-01](TAREFA-01-autenticacao-staff.md) | Autenticação do Staff (Login + JWT) | 🔴 Alta | US-09 | 5–8 pts | — |
-| [TAREFA-02](TAREFA-02-sessao-cliente-qrcode.md) | Sessão Seamless do Cliente via QR Code | 🔴 Alta | US-01, US-10 | 5–8 pts | — |
-| [TAREFA-03](TAREFA-03-separacao-mesa-comanda.md) | Separação de Mesa e Comanda no Frontend | 🔴 Alta | US-01, US-08 | 8–13 pts | TAREFA-02 |
+| [TAREFA-03](TAREFA-03-separacao-mesa-comanda.md) | Separação de Mesa e Comanda no Frontend | 🔴 Alta | US-01, US-08 | 8–13 pts | — |
+| [TAREFA-02](TAREFA-02-sessao-cliente-qrcode.md) | Sessão Seamless do Cliente via QR Code | 🔴 Alta | US-01, US-10 | 5–8 pts | TAREFA-03 |
 | [TAREFA-04](TAREFA-04-checkout-fechamento-comanda.md) | Fluxo de Checkout e Fechamento de Comanda | 🟠 Alta-Média | US-08 | 5–8 pts | TAREFA-02, TAREFA-03 |
 | [TAREFA-05](TAREFA-05-crud-cardapio-admin.md) | CRUD de Cardápio para o Administrador | 🟡 Média | US-05 | 5–8 pts | TAREFA-01 |
 | [TAREFA-06](TAREFA-06-upload-imagens.md) | Upload de Imagens dos Itens do Cardápio | 🟡 Média | US-06 | 3–5 pts | TAREFA-05 |
@@ -26,13 +26,14 @@ TAREFA-01 (Auth Staff)
     └── TAREFA-05 (CRUD Cardápio)
             └── TAREFA-06 (Upload Imagens)
 
-TAREFA-02 (Sessão Cliente QR)
-    └── TAREFA-03 (Mesa vs Comanda)
+TAREFA-03 (Mesa vs Comanda)          ← sem dependência, iniciar primeiro
+    └── TAREFA-02 (Sessão Cliente QR)
             └── TAREFA-04 (Checkout)
                     └── TAREFA-07 (BI / Métricas)
 ```
 
-> **TAREFA-01** e **TAREFA-02** podem ser iniciadas em paralelo, pois não possuem dependências entre si.
+> **TAREFA-01** e **TAREFA-03** podem ser iniciadas em paralelo, pois não possuem dependências entre si.
+> A separação arquitetural (TAREFA-03) deve preceder a implementação de autenticação real (TAREFA-02) para garantir que a sessão seja construída sobre a fundação correta.
 
 ---
 
