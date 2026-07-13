@@ -36,6 +36,9 @@ export default function StaffLoginPage() {
       localStorage.setItem('staff_token', data.token);
       localStorage.setItem('staff_usuario', JSON.stringify(data.usuario));
 
+      // Sincroniza o token no cookie imediatamente para que o proxy permita o acesso
+      document.cookie = `staff_token=${data.token}; path=/; samesite=lax; max-age=${8 * 60 * 60}`;
+
       router.replace('/staff');
     } catch {
       setErro('Falha na conexão com o servidor.');
