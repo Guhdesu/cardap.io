@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PedidoService } from '../services/PedidoService';
 import { NovoPedidoPayload, AtualizarStatusPayload } from '../types';
+import { requireAuth } from '../middleware/auth';
 
 export function pedidosRouter(service: PedidoService): Router {
   const router = Router();
@@ -39,8 +40,8 @@ export function pedidosRouter(service: PedidoService): Router {
     }
   });
 
-  // PUT /pedidos/:id/status — staff atualiza status de um item
-  router.put('/:id/status', async (req: Request, res: Response) => {
+  // PUT /pedidos/:id/status — staff atualiza status de um item (protegido)
+  router.put('/:id/status', requireAuth, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const { status } = req.body as AtualizarStatusPayload;
 
@@ -57,8 +58,8 @@ export function pedidosRouter(service: PedidoService): Router {
     }
   });
 
-  // GET /pedidos/staff/comandas — painel do staff
-  router.get('/staff/comandas', async (_req: Request, res: Response) => {
+  // GET /pedidos/staff/comandas — painel do staff (protegido)
+  router.get('/staff/comandas', requireAuth, async (_req: Request, res: Response) => {
     try {
       const comandas = await service.listarComandasAtivas();
       res.json(comandas);

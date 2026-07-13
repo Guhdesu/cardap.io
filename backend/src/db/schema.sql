@@ -8,6 +8,16 @@ CREATE TABLE IF NOT EXISTS mesas (
   numero    INTEGER NOT NULL UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS usuarios (
+  id          SERIAL PRIMARY KEY,
+  nome        VARCHAR(100)  NOT NULL,
+  email       VARCHAR(255)  NOT NULL UNIQUE,
+  senha_hash  VARCHAR(255)  NOT NULL,
+  role        VARCHAR(20)   NOT NULL CHECK (role IN ('admin', 'funcionario')),
+  ativo       BOOLEAN       NOT NULL DEFAULT true,
+  criado_em   TIMESTAMPTZ   DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS cardapio_itens (
   id          SERIAL PRIMARY KEY,
   nome        VARCHAR(100)   NOT NULL,
@@ -54,3 +64,13 @@ INSERT INTO cardapio_itens (nome, descricao, preco, categoria, disponivel, image
   ('Refrigerante Lata',   'Coca-Cola, Guaraná Antarctica ou Sprite — 350ml.',                                              8.90, 'Bebidas',          true, 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&q=80'),
   ('Brownie Quente',      'Brownie de chocolate belga quentinho com sorvete de creme e calda de chocolate.',              22.90, 'Sobremesas',       true, 'https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=600&q=80')
 ON CONFLICT DO NOTHING;
+
+-- ── Seed: Usuários padrão ─────────────────────────────────
+-- ATENÇÃO: hashes gerados com bcrypt custo 12
+-- admin123   → admin@cardap.io
+-- cozinha123 → cozinha@cardap.io
+-- Para regen: node -e "const b=require('bcrypt'); console.log(b.hashSync('admin123',12))"
+INSERT INTO usuarios (nome, email, senha_hash, role) VALUES
+  ('Administrador', 'admin@cardap.io',   '$2b$12$2MoHQINY7A5O1CDlQV2fJug42pNSFM8TRcA7wsAumayxkmPb.b9rq', 'admin'),
+  ('Cozinha',       'cozinha@cardap.io', '$2b$12$yMv0rdSQaoxsErP7Fu.L2OJ9fcMEVOxA3u4h683lgxYgUfu1iRWfC', 'funcionario')
+ON CONFLICT (email) DO NOTHING;

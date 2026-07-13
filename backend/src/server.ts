@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { pool, testConnection } from './db/connection';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 // ── Repositórios ──────────────────────────────────────────
 import { CardapioRepository } from './repositories/postgres/CardapioRepository';
@@ -15,6 +16,7 @@ import { cardapioRouter } from './routes/cardapio';
 import { mesasRouter } from './routes/mesas';
 import { pedidosRouter } from './routes/pedidos';
 import { qrcodeRouter } from './routes/qrcode';
+import { authRouter } from './routes/auth';
 
 // ── Socket ────────────────────────────────────────────────
 import { setupSocketEvents } from './socket/events';
@@ -47,9 +49,11 @@ const mesaService = new MesaService(mesaRepo);
 const pedidoService = new PedidoService(pedidoRepo, io);
 
 app.use(cors({ origin: '*' }));
+app.use(cookieParser());
 app.use(express.json());
 
 // ── Rotas ─────────────────────────────────────────────────
+app.use('/auth', authRouter());
 app.use('/cardapio', cardapioRouter(cardapioService));
 app.use('/mesas', mesasRouter(mesaService));
 app.use('/pedidos', pedidosRouter(pedidoService));

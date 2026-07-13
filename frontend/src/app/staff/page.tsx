@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { ComandaComItens, PedidoItem, StatusPedido } from '@/lib/types';
 import { getSocket } from '@/lib/socket';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import styles from './page.module.css';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -67,6 +68,7 @@ const playNotificationSound = () => {
 };
 
 export default function StaffPage() {
+  const { usuario, carregando: carregandoAuth, logout, authHeader } = useStaffAuth();
   const [comandas, setComandas] = useState<ComandaComItens[]>([]);
   const [novoPedido, setNovoPedido] = useState(false);
   const [conectado, setConectado] = useState(false);
@@ -74,8 +76,9 @@ export default function StaffPage() {
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    // Carga inicial
-    fetch(`${API}/pedidos/staff/comandas`)
+    if (carregandoAuth || !usuario) return;
+    // Carga inicial com token de autenticação
+    fetch(`${API}/pedidos/staff/comandas`, { headers: authHeader() })
       .then((r) => r.json())
       .then(setComandas);
 
@@ -119,12 +122,12 @@ export default function StaffPage() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [carregandoAuth, usuario, authHeader]);
 
   const atualizarStatus = async (itemId: number, status: StatusPedido) => {
     await fetch(`${API}/pedidos/${itemId}/status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({ status }),
     });
 
@@ -205,6 +208,14 @@ export default function StaffPage() {
     );
   };
 
+  if (carregandoAuth) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem' }}>CARREGANDO...</span>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -226,6 +237,13 @@ export default function StaffPage() {
           {totalAtivos > 0 && (
             <div className={styles.totalBadge}>{totalAtivos} item{totalAtivos !== 1 ? 'ns' : ''} ativo{totalAtivos !== 1 ? 's' : ''}</div>
           )}
+          <div className={styles.usuarioInfo}>
+            <span className={styles.usuarioNome}>{usuario?.nome}</span>
+            <span className={styles.usuarioRole}>{usuario?.role}</span>
+          </div>
+          <button onClick={logout} className={styles.logoutBtn} title="Sair">
+            SAIR →
+          </button>
         </div>
       </header>
 
