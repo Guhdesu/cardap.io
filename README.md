@@ -86,7 +86,7 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 |------|--------|
 | Gustavo Ferreira | [@Guhdesu](https://github.com/Guhdesu) |
 | Isis Bruna | — |
-| Denny Rodrigues | — |
+| Denny Rodrigues | — | [@DennyCarmo](https://github.com/DennyRodrigues/) |
 | Johnny Gabriel | — |
 | Saullo Augusto | — |
 

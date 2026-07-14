@@ -1,0 +1,287 @@
+.page {
+  min-height: 100dvh;
+  background: var(--color-surface);
+}
+
+/* Header */
+.header {
+  background: var(--color-ink);
+  color: var(--color-white);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.dot { color: var(--color-accent); }
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: white;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.novoPedidoAlert {
+  background: var(--color-accent);
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.04em;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.statusOn .statusDot  { background: var(--color-success); animation: pulse 2s infinite; }
+.statusOff .statusDot { background: #888; }
+
+.totalBadge {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+}
+
+/* Main */
+.main {
+  padding: 24px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Empty */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: var(--color-ink-soft);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.empty p {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-ink);
+}
+
+/* Kanban Board */
+.kanbanBoard {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  min-height: calc(100vh - 180px);
+  padding-bottom: 24px;
+}
+
+.kanbanColumn {
+  flex: 1;
+  min-width: 320px;
+  max-width: 400px;
+  background: #F1F1F1;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--color-ink);
+  padding-bottom: 8px;
+}
+
+.columnTitle {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.columnBadge {
+  background: var(--color-ink);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.columnCards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 270px);
+  padding-right: 4px;
+}
+
+.columnCards::-webkit-scrollbar {
+  width: 4px;
+}
+
+.columnCards::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.emptyCardList {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 2px dashed rgba(0,0,0,0.06);
+  border-radius: var(--radius-md);
+  background: rgba(0,0,0,0.01);
+}
+
+/* Kanban Card */
+.kanbanCard {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-ink);
+  padding: 16px;
+  box-shadow: 4px 4px 0px var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.kanbanCard:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--color-ink);
+}
+
+.cardEntregue {
+  opacity: 0.6;
+  border-color: var(--color-border);
+  box-shadow: 2px 2px 0px var(--color-border);
+}
+
+.cardEntregue:hover {
+  transform: none;
+  box-shadow: 2px 2px 0px var(--color-border);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 6px;
+}
+
+.cardMesa {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-accent);
+  letter-spacing: 0.02em;
+}
+
+.cardId {
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+  font-weight: 600;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardItemNome {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-ink);
+  line-height: 1.3;
+}
+
+.cardItemQty {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-accent);
+  margin-right: 8px;
+}
+
+.cardObs {
+  font-size: 0.8rem;
+  color: #c23b00;
+  background: #FFF0EB;
+  border-left: 3px solid var(--color-accent);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.cardBtn {
+  font-size: 0.75rem !important;
+  padding: 6px 12px !important;
+  font-weight: 700;
+  border: 1.5px solid var(--color-ink) !important;
+  box-shadow: 2px 2px 0px var(--color-ink) !important;
+}
+
+.cardBtn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--color-ink) !important;
+}
+
