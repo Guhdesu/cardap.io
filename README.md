@@ -66,6 +66,21 @@ npm run dev
 
 ---
 
+## 🧪 Testes Automatizados
+
+O sistema conta com uma suíte de testes unitários e de integração desenvolvida com **Jest** e **Supertest**, cobrindo regras de negócio, serviços e rotas da API.
+
+Para rodar os testes e gerar o relatório de cobertura (coverage):
+
+```bash
+cd backend
+npm run test
+# ou
+npx jest --coverage
+```
+
+---
+
 ## Arquitetura
 
 ```
@@ -111,7 +126,7 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 | [Gestão do Processo](docs/processo.md) | Metodologia Kanban, backlog, evidências de fluxo e lições aprendidas |
 | [Tarefas de Desenvolvimento](docs/tasks/README.md) | Índice com 7 tarefas detalhadas ordenadas por prioridade |
 | [Próximos Passos e Planejamento](docs/proximos-passos.md) | Visão geral do roadmap de desenvolvimento |
-| Plano de Testes | *(em elaboração)* |
+| Testes Automatizados (Jest) | Suíte de testes em `backend/src/__tests__` que cobre Domain, Services e Integração API |
 
 ---
 
