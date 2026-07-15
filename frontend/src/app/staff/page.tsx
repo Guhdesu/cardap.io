@@ -796,7 +796,7 @@ export default function StaffPanel() {
             )}
           </div>
         ) : (
-          <div className={styles.kanbanContainer}>
+          <div className={styles.kanbanBoard}>
             {renderColuna('PENDENTE', '📥', itensPendente, 'pendente')}
             {renderColuna('PREPARANDO', '🔥', itensPreparando, 'preparando')}
             {renderColuna('PRONTO', '✅', itensPronto, 'pronto')}
