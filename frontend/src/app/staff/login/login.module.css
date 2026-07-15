@@ -1,0 +1,115 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-white);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: 8px 8px 0px var(--color-ink);
+  overflow: hidden;
+}
+
+.header {
+  background: var(--color-ink);
+  padding: 32px 32px 24px;
+  text-align: center;
+}
+
+.logo {
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  display: block;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.dot { color: var(--color-accent); }
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--color-white);
+  line-height: 1;
+  margin: 0;
+}
+
+.sub {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.form {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--color-ink);
+}
+
+.input {
+  padding: 12px 16px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  outline: none;
+  transition: box-shadow 0.15s;
+}
+
+.input:focus {
+  box-shadow: 4px 4px 0px var(--color-ink);
+}
+
+.input::placeholder {
+  color: var(--color-ink-soft);
+}
+
+.erro {
+  background: #FFF0EB;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #c23b00;
+}
+
+.btnSubmit {
+  width: 100%;
+  justify-content: center;
+  font-size: 1rem;
+  padding: 14px;
+}
+
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 4px 4px 0px var(--color-ink);
+}

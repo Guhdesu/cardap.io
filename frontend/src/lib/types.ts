@@ -9,12 +9,13 @@ export interface ItemCardapio {
   categoria: string;
   disponivel: boolean;
   imagem_url: string;
+  imagem_public_id?: string | null;
 }
 
 export interface Comanda {
   id: number;
   mesa_id: number;
-  status: 'aberta' | 'fechada';
+  status: 'aberta' | 'fechamento_solicitado' | 'encerrada' | 'fechada';
   criado_em: string;
 }
 
@@ -32,6 +33,7 @@ export interface PedidoItem {
   observacao: string;
   status: StatusPedido;
   criado_em: string;
+  preco?: number;
 }
 
 export interface ComandaComItens extends Comanda {

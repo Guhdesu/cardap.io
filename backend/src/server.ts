@@ -4,17 +4,23 @@ import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { pool, testConnection } from './db/connection';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 // ── Repositórios ──────────────────────────────────────────
 import { CardapioRepository } from './repositories/postgres/CardapioRepository';
 import { MesaRepository } from './repositories/postgres/MesaRepository';
 import { PedidoRepository } from './repositories/postgres/PedidoRepository';
+import { SessaoRepository } from './repositories/postgres/SessaoRepository';
 
 // ── Rotas ─────────────────────────────────────────────────
 import { cardapioRouter } from './routes/cardapio';
 import { mesasRouter } from './routes/mesas';
 import { pedidosRouter } from './routes/pedidos';
 import { qrcodeRouter } from './routes/qrcode';
+import { authRouter } from './routes/auth';
+import { comandaRouter } from './routes/comanda';
+import { sessaoRouter } from './routes/sessao';
+import { adminCardapioRouter } from './routes/adminCardapio';
 
 // ── Socket ────────────────────────────────────────────────
 import { setupSocketEvents } from './socket/events';
@@ -23,6 +29,7 @@ import { setupSocketEvents } from './socket/events';
 import { CardapioService } from './services/CardapioService';
 import { MesaService } from './services/MesaService';
 import { PedidoService } from './services/PedidoService';
+import { SessaoService } from './services/SessaoService';
 
 // ── Config ────────────────────────────────────────────────
 const PORT = process.env.PORT ?? 3001;
@@ -32,6 +39,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 const cardapioRepo = new CardapioRepository();
 const mesaRepo = new MesaRepository();
 const pedidoRepo = new PedidoRepository();
+const sessaoRepo = new SessaoRepository();
 
 // ── App Express & Socket.io ───────────────────────────────
 const app = express();
@@ -45,15 +53,21 @@ const io = new SocketServer(httpServer, {
 const cardapioService = new CardapioService(cardapioRepo);
 const mesaService = new MesaService(mesaRepo);
 const pedidoService = new PedidoService(pedidoRepo, io);
+const sessaoService = new SessaoService(sessaoRepo, mesaRepo);
 
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 
 // ── Rotas ─────────────────────────────────────────────────
+app.use('/', sessaoRouter(sessaoService));
+app.use('/auth', authRouter());
+app.use('/comanda', comandaRouter(io));
 app.use('/cardapio', cardapioRouter(cardapioService));
 app.use('/mesas', mesasRouter(mesaService));
 app.use('/pedidos', pedidosRouter(pedidoService));
-app.use('/qrcode', qrcodeRouter(mesaService, FRONTEND_URL));
+app.use('/qrcode', qrcodeRouter(mesaService, sessaoService, FRONTEND_URL));
+app.use('/admin/cardapio', adminCardapioRouter(io));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

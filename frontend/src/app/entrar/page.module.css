@@ -1,0 +1,322 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+  font-family: var(--font-display);
+  padding: 20px;
+}
+
+.loadingContainer {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--color-ink);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loadingText {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.loadingSub {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+.errorContainer {
+  width: 100%;
+  max-width: 500px;
+}
+
+.errorCard {
+  background: var(--color-white);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 8px 8px 0px var(--color-ink);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.errorIcon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.errorTitle {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-ink);
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+}
+
+.errorText {
+  font-size: 1rem;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.instructions {
+  text-align: left;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.instructions h3 {
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+}
+
+.instructions ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: var(--color-ink);
+  line-height: 1.6;
+}
+
+.instructions li {
+  margin-bottom: 6px;
+}
+
+.errorBtn {
+  width: 100%;
+  font-weight: 900;
+  padding: 14px;
+  letter-spacing: 0.05em;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.choiceContainer {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.choiceHeader {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.choiceTitle {
+  font-size: 2.2rem;
+  font-weight: 950;
+  color: var(--color-ink);
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.choiceSubtitle {
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+}
+
+.choiceCards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.dividerRow {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 4px 0;
+}
+
+.dividerRow::before,
+.dividerRow::after {
+  content: '';
+  flex: 1;
+  border-bottom: 2px dashed var(--color-ink-soft);
+}
+
+.dividerRow:not(:empty)::before {
+  margin-right: 1em;
+}
+
+.dividerRow:not(:empty)::after {
+  margin-left: 1em;
+}
+
+/* Criar Minha Comanda (Top level premium card) */
+.individualCard {
+  background: var(--color-white);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: 6px 6px 0px var(--color-ink);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+}
+
+.individualCard:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px var(--color-ink);
+  background-color: var(--color-surface);
+}
+
+.cardMainInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--color-ink);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.cardHeaderSubtitle {
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.actionChevron {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--color-ink-soft);
+  transition: transform 0.2s;
+}
+
+.individualCard:hover .actionChevron,
+.comandaRow:hover .actionChevron {
+  color: var(--color-accent);
+  transform: translateX(2px);
+}
+
+/* Seção de Comandas Compartilhadas */
+.sharedSection {
+  background: var(--color-white);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: 6px 6px 0px var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sharedSectionHeader {
+  padding: 16px 20px;
+  background: var(--color-surface);
+  border-bottom: 2.5px solid var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sharedSectionTitle {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--color-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.sharedSectionDesc {
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.comandaList {
+  display: flex;
+  flex-direction: column;
+}
+
+.comandaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background: var(--color-white);
+  width: 100%;
+  text-align: left;
+}
+
+.comandaRow:not(:last-child) {
+  border-bottom: 2.5px solid var(--color-ink);
+}
+
+.comandaRow:hover {
+  background-color: var(--color-surface);
+}
+
+.comandaRowTitle {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px 0;
+}
+
+.comandaRowMeta {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.comandaRowMetaActive {
+  color: var(--color-accent);
+}

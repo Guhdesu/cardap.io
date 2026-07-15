@@ -16,6 +16,8 @@ export default function Home() {
   const [mesaNum, setMesaNum] = useState('');
   const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+
   // Escolhe uma mesa aleatória ao carregar para evitar hydration mismatch
   useEffect(() => {
     setMesaEscolhida(Math.floor(Math.random() * MESA_CONFIG.MAX) + MESA_CONFIG.MIN);
@@ -29,11 +31,35 @@ export default function Home() {
     setMesaEscolhida(nextMesa);
   };
 
+  const acessarMesaComToken = async (id: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/qrcode`);
+      if (!res.ok) {
+        throw new Error('Erro ao carregar link da mesa.');
+      }
+      const data = await res.json();
+      const mesaInfo = data.find((m: any) => m.mesa_id === id);
+      if (mesaInfo && mesaInfo.mesa_url) {
+        window.location.href = mesaInfo.mesa_url;
+      } else {
+        router.push(`/mesa/${id}`);
+      }
+    } catch (err) {
+      console.error('[acessarMesaComToken] Falha:', err);
+      router.push(`/mesa/${id}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAccess = (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseInt(mesaNum);
-    if (!isNaN(num) && num > 0) {
-      router.push(`/mesa/${num}`);
+    if (!isNaN(num) && num >= MESA_CONFIG.MIN && num <= MESA_CONFIG.MAX) {
+      acessarMesaComToken(num);
+    } else {
+      alert(`Por favor, insira uma mesa válida entre ${MESA_CONFIG.MIN} e ${MESA_CONFIG.MAX}.`);
     }
   };
 
@@ -65,11 +91,12 @@ export default function Home() {
         </div>
 
         <button 
-          onClick={() => router.push(`/mesa/${mesaEscolhida}`)} 
+          onClick={() => acessarMesaComToken(mesaEscolhida)} 
           className="btn btn-primary"
           style={{ width: '100%', justifyContent: 'center' }}
+          disabled={loading}
         >
-          PEDIR NA MESA {mesaEscolhida.toString().padStart(2, '0')}
+          {loading ? 'CARREGANDO...' : `PEDIR NA MESA ${mesaEscolhida.toString().padStart(2, '0')}`}
         </button>
 
       </div>
@@ -95,8 +122,8 @@ export default function Home() {
           />
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-          VER CARDÁPIO
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
+          {loading ? 'CARREGANDO...' : 'VER CARDÁPIO'}
         </button>
       </form>
     </main>
