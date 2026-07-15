@@ -71,17 +71,18 @@ export function qrcodeRouter(
   });
 
   // GET /qrcode — lista todas as mesas com URL do QR
-  router.get('/', async (_req: Request, res: Response) => {
+  router.get('/', async (req: Request, res: Response) => {
     const mesas = await service.listarTodasAsMesas();
     const lista = await Promise.all(
       mesas.map(async (m) => {
         const tokenObj = await sessaoService.obterQRCodePorMesa(m.id);
         const token = tokenObj ? tokenObj.token : '';
+        const backendUrl = `${req.protocol}://${req.get('host')}`;
 
         return {
           mesa_id: m.id,
           mesa_numero: m.numero,
-          qrcode_url: `${frontendUrl.replace(':3000', ':3001').replace(':3002', ':3001')}/qrcode/${m.id}`,
+          qrcode_url: `${backendUrl}/qrcode/${m.id}`,
           mesa_url: token
             ? `${frontendUrl}/entrar?token=${token}`
             : `${frontendUrl}/mesa/${m.id}`,
