@@ -498,20 +498,20 @@ export default function StaffPanel() {
       {/* Nav Tabs */}
       <div className={styles.tabsContainer}>
         <button
-          className={`${styles.tabBtn} ${activeTab === 'kanban' ? styles.tabBtnActive : ''}`}
+          className={`${styles.tabButton} ${activeTab === 'kanban' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('kanban')}
         >
           📋 FILA DA COZINHA (KANBAN)
         </button>
         <button
-          className={`${styles.tabBtn} ${activeTab === 'mesas' ? styles.tabBtnActive : ''}`}
+          className={`${styles.tabButton} ${activeTab === 'mesas' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('mesas')}
         >
           🪑 MESAS ATIVAS
         </button>
         {usuario?.role === 'admin' && (
           <button
-            className={`${styles.tabBtn} ${activeTab === 'cardapio' ? styles.tabBtnActive : ''}`}
+            className={`${styles.tabButton} ${activeTab === 'cardapio' ? styles.tabButtonActive : ''}`}
             onClick={() => setActiveTab('cardapio')}
           >
             🍔 GERENCIAR CARDÁPIO
