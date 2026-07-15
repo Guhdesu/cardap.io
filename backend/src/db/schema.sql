@@ -108,6 +108,7 @@ WHERE NOT EXISTS (SELECT 1 FROM qr_codes q WHERE q.mesa_id = m.id)
 ON CONFLICT DO NOTHING;
 
 -- ── Updates para bancos existentes ───────────────────────
+ALTER TABLE comandas ALTER COLUMN status TYPE VARCHAR(30);
 ALTER TABLE comandas ADD COLUMN IF NOT EXISTS encerrada_em TIMESTAMPTZ;
 ALTER TABLE comandas DROP CONSTRAINT IF EXISTS chk_comandas_status;
 ALTER TABLE comandas ADD CONSTRAINT chk_comandas_status CHECK (status IN ('aberta', 'fechamento_solicitado', 'encerrada', 'fechada'));
