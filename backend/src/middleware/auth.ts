@@ -9,11 +9,15 @@ export interface JwtPayload {
   role: 'admin' | 'funcionario';
 }
 
-// Extende o tipo Request do Express para incluir o usuário autenticado
+// Extende o tipo Request do Express para incluir o usuário autenticado e a sessão do cliente
 declare global {
   namespace Express {
     interface Request {
       usuario?: JwtPayload;
+      sessao?: {
+        id: number;
+        mesa_id: number;
+      };
     }
   }
 }
@@ -56,5 +60,34 @@ export function requireRole(role: 'admin' | 'funcionario') {
       return;
     }
     next();
+  };
+}
+
+// Middleware: exige sessão de cliente ativa baseada no cookie sessao_id ou header X-Sessao-Id
+export function makeRequireSessaoCliente(validarSessaoFn: (sessaoId: number) => Promise<any>) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const sessaoIdStr = req.cookies?.sessao_id || req.headers['x-sessao-id'];
+    const sessaoId = parseInt(sessaoIdStr as string, 10);
+
+    if (isNaN(sessaoId)) {
+      res.status(401).json({ error: 'Sessão de cliente ausente ou inválida.' });
+      return;
+    }
+
+    try {
+      const sessaoAtiva = await validarSessaoFn(sessaoId);
+      if (!sessaoAtiva) {
+        res.status(401).json({ error: 'Sessão de cliente inativa ou expirada.' });
+        return;
+      }
+      req.sessao = {
+        id: sessaoAtiva.id,
+        mesa_id: sessaoAtiva.mesa_id,
+      };
+      next();
+    } catch (err) {
+      console.error('[auth] Erro ao validar sessao:', err);
+      res.status(500).json({ error: 'Erro interno ao validar sessão.' });
+    }
   };
 }

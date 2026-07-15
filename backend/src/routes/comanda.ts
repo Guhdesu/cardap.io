@@ -1,11 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db/connection';
+import { makeRequireSessaoCliente } from '../middleware/auth';
+import { SessaoRepository } from '../repositories/postgres/SessaoRepository';
 
 export function comandaRouter(): Router {
   const router = Router();
+  const sessaoRepo = new SessaoRepository();
+  const requireSessaoCliente = makeRequireSessaoCliente((id) => sessaoRepo.buscarSessaoAtiva(id));
 
-  // GET /comanda/:id — retorna dados completos da comanda
-  router.get('/:id', async (req: Request, res: Response) => {
+  // GET /comanda/:id — retorna dados completos da comanda (protegido por sessão)
+  router.get('/:id', requireSessaoCliente, async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       res.status(400).json({ error: 'ID de comanda inválido' });
@@ -14,7 +18,7 @@ export function comandaRouter(): Router {
 
     try {
       const comandaResult = await pool.query(
-        'SELECT id, mesa_id, status, criado_em FROM comandas WHERE id = $1',
+        'SELECT id, mesa_id, sessao_id, status, criado_em FROM comandas WHERE id = $1',
         [id]
       );
 
@@ -24,6 +28,12 @@ export function comandaRouter(): Router {
       }
 
       const comanda = comandaResult.rows[0];
+
+      // Garante que o cliente só acesse a própria comanda/sessão
+      if (comanda.sessao_id !== req.sessao!.id && comanda.mesa_id !== req.sessao!.mesa_id) {
+        res.status(403).json({ error: 'Acesso negado. Esta comanda não pertence à sua sessão.' });
+        return;
+      }
 
       // Busca os itens do pedido e seus preços atuais
       const itensResult = await pool.query(

@@ -74,3 +74,36 @@ INSERT INTO usuarios (nome, email, senha_hash, role) VALUES
   ('Administrador', 'admin@cardap.io',   '$2b$12$2MoHQINY7A5O1CDlQV2fJug42pNSFM8TRcA7wsAumayxkmPb.b9rq', 'admin'),
   ('Cozinha',       'cozinha@cardap.io', '$2b$12$yMv0rdSQaoxsErP7Fu.L2OJ9fcMEVOxA3u4h683lgxYgUfu1iRWfC', 'funcionario')
 ON CONFLICT (email) DO NOTHING;
+
+-- ── Tabelas de Sessão e QR Code ───────────────────────────
+CREATE TABLE IF NOT EXISTS qr_codes (
+  id         SERIAL PRIMARY KEY,
+  mesa_id    INTEGER REFERENCES mesas(id) NOT NULL,
+  token      UUID UNIQUE NOT NULL,
+  ativo      BOOLEAN NOT NULL DEFAULT true,
+  criado_em  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sessoes_cliente (
+  id            SERIAL PRIMARY KEY,
+  qr_code_id    INTEGER REFERENCES qr_codes(id) NOT NULL,
+  mesa_id       INTEGER REFERENCES mesas(id) NOT NULL,
+  iniciada_em   TIMESTAMPTZ DEFAULT NOW(),
+  encerrada_em  TIMESTAMPTZ
+);
+
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS sessao_id INTEGER REFERENCES sessoes_cliente(id);
+
+-- Índices adicionais para performance
+CREATE INDEX IF NOT EXISTS idx_qr_codes_token ON qr_codes(token);
+CREATE INDEX IF NOT EXISTS idx_qr_codes_mesa_id ON qr_codes(mesa_id);
+CREATE INDEX IF NOT EXISTS idx_sessoes_cliente_qr_code_id ON sessoes_cliente(qr_code_id);
+CREATE INDEX IF NOT EXISTS idx_comandas_sessao_id ON comandas(sessao_id);
+
+-- ── Seed: QR Codes ativos para cada mesa ─────────────────
+INSERT INTO qr_codes (mesa_id, token, ativo)
+SELECT m.id, gen_random_uuid(), true
+FROM mesas m
+WHERE NOT EXISTS (SELECT 1 FROM qr_codes q WHERE q.mesa_id = m.id)
+ON CONFLICT DO NOTHING;
+

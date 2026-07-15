@@ -34,8 +34,25 @@ export default function ComandaPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const comandaRes = await fetch(`${API}/comanda/${comandaId}`);
+        const sessaoId = localStorage.getItem('sessao_id');
+        const savedMesaId = localStorage.getItem('mesa_id');
+
+        if (!sessaoId || !savedMesaId) {
+          router.replace('/entrar?expired=true');
+          return;
+        }
+
+        const comandaRes = await fetch(`${API}/comanda/${comandaId}`, {
+          headers: { 'x-sessao-id': sessaoId },
+        });
+
         if (!comandaRes.ok) {
+          if (comandaRes.status === 401 || comandaRes.status === 403) {
+            localStorage.removeItem('sessao_id');
+            localStorage.removeItem('mesa_id');
+            router.replace('/entrar?expired=true');
+            return;
+          }
           throw new Error('Comanda não encontrada ou encerrada');
         }
         const comandaData = await comandaRes.json();
@@ -79,7 +96,7 @@ export default function ComandaPage() {
     return () => {
       getSocket().disconnect();
     };
-  }, [comandaId]);
+  }, [comandaId, router]);
 
   // Persiste carrinho local
   useEffect(() => {
@@ -123,9 +140,14 @@ export default function ComandaPage() {
         })),
       };
 
+      const sessaoId = localStorage.getItem('sessao_id') || '';
+
       const res = await fetch(`${API}/pedidos`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-sessao-id': sessaoId,
+        },
         body: JSON.stringify(payload),
       });
 

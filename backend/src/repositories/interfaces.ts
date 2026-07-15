@@ -6,6 +6,8 @@ import {
   ComandaComItens,
   NovoPedidoItem,
   StatusPedido,
+  QRCode,
+  SessaoCliente,
 } from '../types';
 
 // ============================================================
@@ -21,7 +23,7 @@ export interface ICardapioRepository {
 export interface IMesaRepository {
   listarTodas(): Promise<Mesa[]>;
   buscarPorId(id: number): Promise<Mesa | null>;
-  obterOuCriarComanda(mesaId: number): Promise<Comanda>;
+  obterOuCriarComanda(mesaId: number, sessaoId?: number): Promise<Comanda>;
   buscarComanda(mesaId: number): Promise<Comanda | null>;
 }
 
@@ -30,4 +32,12 @@ export interface IPedidoRepository {
   atualizarStatus(id: number, status: StatusPedido): Promise<PedidoItem | null>;
   listarPorComanda(comanda_id: number): Promise<PedidoItem[]>;
   listarComandasAbertas(): Promise<ComandaComItens[]>;
+}
+
+export interface ISessaoRepository {
+  buscarTokenAtivo(token: string): Promise<QRCode | null>;
+  criarSessao(qrCodeId: number, mesaId: number): Promise<SessaoCliente>;
+  buscarSessaoAtiva(sessaoId: number): Promise<SessaoCliente | null>;
+  encerrarSessao(sessaoId: number): Promise<void>;
+  obterQRCodePorMesa(mesaId: number): Promise<QRCode | null>;
 }

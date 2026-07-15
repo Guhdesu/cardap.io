@@ -560,5 +560,30 @@
   background: var(--color-white);
 }
 
+.exportQRBtn {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-ink);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 1.5px 1.5px 0px var(--color-ink);
+  transition: all 0.1s ease;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.exportQRBtn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--color-ink);
+  background: var(--color-white);
+}
+
+
 
 

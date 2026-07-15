@@ -55,7 +55,7 @@ Implementar a autenticação zero-fricção do cliente via token único embutido
 ### Geração dos QR Codes Físicos
 
 - [ ] **Rota `GET /admin/qrcode/:mesaId/export`** (protegida por `requireAuth`): Retorna PNG do QR Code apontando para `cardap.io/entrar?token=TOKEN_DA_MESA` — pronto para impressão nos cartões físicos.
-
+- [ ] **Integração com o painel do admin**: Essa rota precisa estar integrada com o painel atual do admin, sendo fácil navegação para admin acessar e imprimir os qrcodes.
 ---
 
 ## Critérios de Aceitação
@@ -73,3 +73,4 @@ Implementar a autenticação zero-fricção do cliente via token único embutido
 - O `token` do QR Code é um `UUID v4` gerado no banco — nunca exposto na lógica de negócio, apenas na URL do QR Code.
 - A sessão do cliente **não é um JWT** — é um registro no banco que permite revogar acesso instantaneamente ao encerrar a comanda.
 - A rota atual `/mesa/[numero]` pode coexistir temporariamente durante a transição, mas deve ser deprecada após esta tarefa ser concluída (TAREFA-03 já terá refatorado a separação das rotas).
+- Escrever uma documentação sobre essa geração de token

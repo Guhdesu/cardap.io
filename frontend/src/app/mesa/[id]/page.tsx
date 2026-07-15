@@ -25,6 +25,26 @@ export default function MesaPage() {
   useEffect(() => {
     const init = async () => {
       try {
+        const sessaoId = localStorage.getItem('sessao_id');
+        const savedMesaId = localStorage.getItem('mesa_id');
+
+        if (!sessaoId || !savedMesaId || Number(savedMesaId) !== mesaId) {
+          router.replace('/entrar?expired=true');
+          return;
+        }
+
+        // Valida a sessão contra o backend
+        const validaRes = await fetch(`${API}/sessao/valida`, {
+          headers: { 'x-sessao-id': sessaoId },
+        });
+
+        if (!validaRes.ok) {
+          localStorage.removeItem('sessao_id');
+          localStorage.removeItem('mesa_id');
+          router.replace('/entrar?expired=true');
+          return;
+        }
+
         const [mesaRes, cardapioRes] = await Promise.all([
           fetch(`${API}/mesas/${mesaId}`),
           fetch(`${API}/cardapio`),
@@ -66,7 +86,7 @@ export default function MesaPage() {
     };
 
     init();
-  }, [mesaId]);
+  }, [mesaId, router]);
 
   // Persiste o carrinho no localStorage sempre que mudar
   useEffect(() => {

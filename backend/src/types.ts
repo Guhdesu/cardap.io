@@ -23,6 +23,7 @@ export interface ItemCardapio {
 export interface Comanda {
   id: number;
   mesa_id: number;
+  sessao_id?: number;
   status: StatusComanda;
   criado_em: Date;
 }
@@ -58,4 +59,20 @@ export interface NovoPedidoPayload {
 
 export interface AtualizarStatusPayload {
   status: StatusPedido;
+}
+
+export interface QRCode {
+  id: number;
+  mesa_id: number;
+  token: string;
+  ativo: boolean;
+  criado_em: Date;
+}
+
+export interface SessaoCliente {
+  id: number;
+  qr_code_id: number;
+  mesa_id: number;
+  iniciada_em: Date;
+  encerrada_em: Date | null;
 }

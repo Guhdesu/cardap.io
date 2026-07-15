@@ -300,9 +300,19 @@ export default function StaffPage() {
                         {isOcupada ? `${comandasDaMesa.length} comanda(s) ativa(s)` : 'Sem comandas ativas'}
                       </span>
                     </div>
-                    <span className={`${styles.mesaCardStatusBadge} ${isOcupada ? styles.mesaOcupada : styles.mesaLivre}`}>
-                      {isOcupada ? 'Ocupada' : 'Livre'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      <span className={`${styles.mesaCardStatusBadge} ${isOcupada ? styles.mesaOcupada : styles.mesaLivre}`}>
+                        {isOcupada ? 'Ocupada' : 'Livre'}
+                      </span>
+                      <a
+                        href={`${API}/qrcode/admin/${mesa.id}/export`}
+                        download
+                        className={styles.exportQRBtn}
+                        title="Baixar QR Code para esta mesa"
+                      >
+                        📥 QR CODE
+                      </a>
+                    </div>
                   </div>
 
                   <div className={styles.mesaCardBody}>
