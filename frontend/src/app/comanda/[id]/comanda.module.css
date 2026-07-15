@@ -315,3 +315,120 @@
   color: var(--color-ink-soft);
   line-height: 1.5;
 }
+
+/* Estados de Fechamento */
+.fechamentoAguardando {
+  background: var(--color-surface);
+  border: 2px dashed var(--color-ink);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.fechamentoAguardando span {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--color-accent);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.fechamentoAguardando p {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Modais de Confirmação */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--color-white);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: 6px 6px 0px var(--color-ink);
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.modalTitle {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+}
+
+.modalText {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+}
+
+.modalActions button {
+  flex: 1;
+  padding: 12px;
+  font-weight: 800;
+}
+
+/* Tela de Agradecimento */
+.thankYouContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 20px;
+  background: var(--color-bg);
+}
+
+.thankYouCard {
+  background: var(--color-white);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: 8px 8px 0px var(--color-ink);
+  padding: 32px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+}
+
+.successIcon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+}
+
+.successTitle {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+}
+
+.successText {
+  font-size: 1rem;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+

@@ -29,10 +29,11 @@ CREATE TABLE IF NOT EXISTS cardapio_itens (
 );
 
 CREATE TABLE IF NOT EXISTS comandas (
-  id         SERIAL PRIMARY KEY,
-  mesa_id    INTEGER REFERENCES mesas(id),
-  status     VARCHAR(20)  DEFAULT 'aberta',   -- aberta | fechada
-  criado_em  TIMESTAMPTZ  DEFAULT NOW()
+  id           SERIAL PRIMARY KEY,
+  mesa_id      INTEGER REFERENCES mesas(id),
+  status       VARCHAR(30)   DEFAULT 'aberta' CHECK (status IN ('aberta', 'fechamento_solicitado', 'encerrada', 'fechada')),
+  criado_em    TIMESTAMPTZ   DEFAULT NOW(),
+  encerrada_em TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS pedido_itens (
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS pedido_itens (
 -- ── Seed: Mesas ───────────────────────────────────────────
 INSERT INTO mesas (numero) VALUES
   (1),(2),(3),(4),(5),(6),(7),(8)
+-- ON CONFLICT
 ON CONFLICT (numero) DO NOTHING;
 
 -- ── Seed: Cardápio ────────────────────────────────────────
@@ -66,10 +68,6 @@ INSERT INTO cardapio_itens (nome, descricao, preco, categoria, disponivel, image
 ON CONFLICT DO NOTHING;
 
 -- ── Seed: Usuários padrão ─────────────────────────────────
--- ATENÇÃO: hashes gerados com bcrypt custo 12
--- admin123   → admin@cardap.io
--- cozinha123 → cozinha@cardap.io
--- Para regen: node -e "const b=require('bcrypt'); console.log(b.hashSync('admin123',12))"
 INSERT INTO usuarios (nome, email, senha_hash, role) VALUES
   ('Administrador', 'admin@cardap.io',   '$2b$12$2MoHQINY7A5O1CDlQV2fJug42pNSFM8TRcA7wsAumayxkmPb.b9rq', 'admin'),
   ('Cozinha',       'cozinha@cardap.io', '$2b$12$yMv0rdSQaoxsErP7Fu.L2OJ9fcMEVOxA3u4h683lgxYgUfu1iRWfC', 'funcionario')
@@ -107,3 +105,7 @@ FROM mesas m
 WHERE NOT EXISTS (SELECT 1 FROM qr_codes q WHERE q.mesa_id = m.id)
 ON CONFLICT DO NOTHING;
 
+-- ── Updates para bancos existentes ───────────────────────
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS encerrada_em TIMESTAMPTZ;
+ALTER TABLE comandas DROP CONSTRAINT IF EXISTS chk_comandas_status;
+ALTER TABLE comandas ADD CONSTRAINT chk_comandas_status CHECK (status IN ('aberta', 'fechamento_solicitado', 'encerrada', 'fechada'));

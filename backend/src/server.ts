@@ -61,7 +61,7 @@ app.use(express.json());
 // ── Rotas ─────────────────────────────────────────────────
 app.use('/', sessaoRouter(sessaoService));
 app.use('/auth', authRouter());
-app.use('/comanda', comandaRouter());
+app.use('/comanda', comandaRouter(io));
 app.use('/cardapio', cardapioRouter(cardapioService));
 app.use('/mesas', mesasRouter(mesaService));
 app.use('/pedidos', pedidosRouter(pedidoService));

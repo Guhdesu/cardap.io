@@ -1,19 +1,12 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ComandaComItens, PedidoItem, StatusPedido } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket';
-import { useStaffAuth } from '@/lib/useStaffAuth';
+import { PedidoItem, StatusPedido, ComandaComItens, Mesa } from '@/lib/types';
 import styles from './page.module.css';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-const STATUS_LABEL: Record<StatusPedido, string> = {
-  pendente: 'Pendente',
-  preparando: 'Preparando',
-  pronto: 'Pronto',
-  entregue: 'Entregue',
-};
 
 const PROXIMO_STATUS: Record<StatusPedido, StatusPedido | null> = {
   pendente: 'preparando',
@@ -22,64 +15,107 @@ const PROXIMO_STATUS: Record<StatusPedido, StatusPedido | null> = {
   entregue: null,
 };
 
-const STATUS_BTN_LABEL: Partial<Record<StatusPedido, string>> = {
-  pendente: 'PREPARAR',
-  preparando: 'PRONTO',
-  pronto: 'ENTREGAR',
+const STATUS_BTN_LABEL: Record<StatusPedido, string> = {
+  pendente: 'Começar a Preparar',
+  preparando: 'Pronto para Servir',
+  pronto: 'Entregar Pedido',
+  entregue: 'Entregue',
 };
 
-// Sintetiza um som de sino de restaurante (ding-dong) usando Web Audio API
+// Som de notificação neo-brutalista amigável
 const playNotificationSound = () => {
+  if (typeof window === 'undefined') return;
   try {
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     
-    // Primeiro tom (Ding)
+    // Primeiro bip (grave)
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
     osc1.connect(gain1);
     gain1.connect(audioCtx.destination);
-    
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá (A5)
-    gain1.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-    
-    osc1.start(audioCtx.currentTime);
-    osc1.stop(audioCtx.currentTime + 0.5);
+    osc1.frequency.value = 587.33; // D5
+    gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    osc1.start();
+    osc1.stop(audioCtx.currentTime + 0.15);
 
-    // Segundo tom (Dong) após 180ms
+    // Segundo bip (agudo, atrasado)
     setTimeout(() => {
       const osc2 = audioCtx.createOscillator();
       const gain2 = audioCtx.createGain();
       osc2.connect(gain2);
       gain2.connect(audioCtx.destination);
-      
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime); // Nota Mi (E5)
-      gain2.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
-      
-      osc2.start(audioCtx.currentTime);
-      osc2.stop(audioCtx.currentTime + 0.7);
-    }, 180);
-  } catch (err) {
-    console.error('[Audio] Erro ao reproduzir notificação:', err);
+      osc2.frequency.value = 880; // A5
+      gain2.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+      osc2.start();
+      osc2.stop(audioCtx.currentTime + 0.25);
+    }, 120);
+
+  } catch (e) {
+    console.warn('[AudioContext] Não foi possível reproduzir som de notificação:', e);
   }
 };
 
-export default function StaffPage() {
-  const { usuario, carregando: carregandoAuth, logout, authHeader } = useStaffAuth();
-  const [comandas, setComandas] = useState<ComandaComItens[]>([]);
-  const [mesas, setMesas] = useState<{ id: number; numero: number }[]>([]);
-  const [novoPedido, setNovoPedido] = useState(false);
-  const [conectado, setConectado] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pedidos' | 'mesas'>('pedidos');
-  const isFirstRender = useRef(true);
-  const mesasRef = useRef<{ id: number; numero: number }[]>([]);
+export default function StaffPanel() {
+  const router = useRouter();
+  const [usuario, setUsuario] = useState<{ id: number; nome: string; role: string } | null>(null);
+  const [carregandoAuth, setCarregandoAuth] = useState(true);
 
+  // Kanban / Mesas
+  const [comandas, setComandas] = useState<ComandaComItens[]>([]);
+  const [mesas, setMesas] = useState<Mesa[]>([]);
+  const mesasRef = useRef<Mesa[]>([]);
+
+  // Socket
+  const [conectado, setConectado] = useState(false);
+  const [novoPedido, setNovoPedido] = useState(false);
+  const [novoFechamento, setNovoFechamento] = useState<string | null>(null);
+
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'kanban' | 'mesas'>('kanban');
+
+  // Recupera token do localStorage/cookie
+  const getStaffToken = () => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('staff_token');
+  };
+
+  const authHeader = (): Record<string, string> => {
+    const token = getStaffToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  // Auth check
+  useEffect(() => {
+    const token = getStaffToken();
+    if (!token) {
+      router.replace('/staff/login');
+      return;
+    }
+
+    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error('Não autorizado');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setUsuario(data.usuario);
+        setCarregandoAuth(false);
+      })
+      .catch(() => {
+        localStorage.removeItem('staff_token');
+        router.replace('/staff/login');
+      });
+  }, [router]);
+
+  // Carrega comanda/mesas e inicializa socket
   useEffect(() => {
     if (carregandoAuth || !usuario) return;
-    // Carga inicial com token de autenticação
+    
+    // Carga inicial
     fetch(`${API}/pedidos/staff/comandas`, { headers: authHeader() })
       .then((r) => r.json())
       .then(setComandas);
@@ -110,7 +146,7 @@ export default function StaffPage() {
         if (existente) {
           return prev.map((c) =>
             c.id === data.comanda_id
-              ? { ...c, itens: [...c.itens, ...data.itens] }
+              ? { ...c, status: 'aberta', itens: [...c.itens, ...data.itens] }
               : c
           );
         }
@@ -130,10 +166,22 @@ export default function StaffPage() {
       });
     });
 
+    socket.on('fechamento_solicitado', (data: { comanda_id: number; mesa_id: number; mesa_numero: number }) => {
+      setNovoFechamento(`Mesa ${data.mesa_numero} solicitou a conta!`);
+      setTimeout(() => setNovoFechamento(null), 6000);
+      playNotificationSound();
+
+      setComandas((prev) =>
+        prev.map((c) =>
+          c.id === data.comanda_id ? { ...c, status: 'fechamento_solicitado' } : c
+        )
+      );
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [carregandoAuth, usuario, authHeader]);
+  }, [carregandoAuth, usuario]);
 
   const atualizarStatus = async (itemId: number, status: StatusPedido) => {
     await fetch(`${API}/pedidos/${itemId}/status`, {
@@ -150,6 +198,40 @@ export default function StaffPage() {
     );
   };
 
+  const confirmarPagamento = async (comandaId: number) => {
+    try {
+      const res = await fetch(`${API}/comanda/${comandaId}/encerrar`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeader(),
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error('Falha ao encerrar comanda.');
+      }
+
+      setComandas((prev) => prev.filter((c) => c.id !== comandaId));
+    } catch (err: any) {
+      alert(err.message || 'Erro ao confirmar pagamento.');
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('staff_token');
+    router.replace('/staff/login');
+  };
+
+  if (carregandoAuth) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.loadingDot} />
+        <span>Carregando painel de staff...</span>
+      </div>
+    );
+  }
+
   // Achata e organiza todos os itens por status
   const todosItens = comandas.flatMap((c) =>
     c.itens.map((i) => ({
@@ -162,10 +244,7 @@ export default function StaffPage() {
   const itensPendente = todosItens.filter((i) => i.status === 'pendente');
   const itensPreparando = todosItens.filter((i) => i.status === 'preparando');
   const itensPronto = todosItens.filter((i) => i.status === 'pronto');
-  // Para manter a coluna limpa, mostra apenas os últimos 8 entregues
-  const itensEntregue = todosItens
-    .filter((i) => i.status === 'entregue')
-    .slice(-8);
+  const itensEntregue = todosItens.filter((i) => i.status === 'entregue').slice(-8);
 
   const totalAtivos = itensPendente.length + itensPreparando.length + itensPronto.length;
 
@@ -240,6 +319,11 @@ export default function StaffPage() {
               🔔 NOVO PEDIDO RECEBIDO!
             </div>
           )}
+          {novoFechamento && (
+            <div className={`${styles.toast} ${styles.toastFechamento} animate-pulse`}>
+              💸 {novoFechamento}
+            </div>
+          )}
           <div className={`${styles.status} ${conectado ? styles.statusOn : styles.statusOff}`}>
             <span className={styles.statusDot} />
             {conectado ? 'Conectado' : 'Desconectado'}
@@ -248,25 +332,22 @@ export default function StaffPage() {
             <div className={styles.totalBadge}>{totalAtivos} item{totalAtivos !== 1 ? 'ns' : ''} ativo{totalAtivos !== 1 ? 's' : ''}</div>
           )}
           <div className={styles.usuarioInfo}>
-            <span className={styles.usuarioNome}>{usuario?.nome}</span>
-            <span className={styles.usuarioRole}>{usuario?.role}</span>
+            <span>Olá, <strong>{usuario?.nome}</strong> ({usuario?.role})</span>
+            <button className={styles.logoutBtn} onClick={logout}>SAIR</button>
           </div>
-          <button onClick={logout} className={styles.logoutBtn} title="Sair">
-            SAIR →
-          </button>
         </div>
       </header>
 
-      {/* Navegação por Abas */}
+      {/* Nav Tabs */}
       <div className={styles.tabsContainer}>
         <button
-          className={`${styles.tabButton} ${activeTab === 'pedidos' ? styles.tabButtonActive : ''}`}
-          onClick={() => setActiveTab('pedidos')}
+          className={`${styles.tabBtn} ${activeTab === 'kanban' ? styles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('kanban')}
         >
-          📋 FILA DE PREPARAÇÃO
+          📋 FILA DA COZINHA (KANBAN)
         </button>
         <button
-          className={`${styles.tabButton} ${activeTab === 'mesas' ? styles.tabButtonActive : ''}`}
+          className={`${styles.tabBtn} ${activeTab === 'mesas' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('mesas')}
         >
           🪑 MESAS ATIVAS
@@ -282,7 +363,10 @@ export default function StaffPage() {
                 (c) => c.mesa_id === mesa.id || c.mesa_numero === mesa.numero
               );
               const isOcupada = comandasDaMesa.length > 0;
-              
+              const comandaFechamentoSolicitado = comandasDaMesa.some(
+                (c) => c.status === 'fechamento_solicitado'
+              );
+
               const totalMesa = comandasDaMesa.reduce((sumMesa, comanda) => {
                 const totalComanda = comanda.itens.reduce(
                   (sumComanda, item) => sumComanda + (item.quantidade * (item.preco ?? 0)),
@@ -292,7 +376,12 @@ export default function StaffPage() {
               }, 0);
 
               return (
-                <div key={mesa.id} className={`${styles.mesaCard} animate-fade-in`}>
+                <div 
+                  key={mesa.id} 
+                  className={`${styles.mesaCard} ${
+                    comandaFechamentoSolicitado ? styles.mesaCardPulsante : ''
+                  } animate-fade-in`}
+                >
                   <div className={styles.mesaCardHeader}>
                     <div>
                       <h3 className={styles.mesaCardTitle}>MESA {String(mesa.numero).padStart(2, '0')}</h3>
@@ -329,20 +418,36 @@ export default function StaffPage() {
                           return (
                             <div key={comanda.id} className={styles.comandaMesaContainer}>
                               <div className={styles.comandaMesaHeader}>
-                                <span className={styles.comandaMesaTitle}>Comanda #{comanda.id}</span>
-                                <span className={styles.comandaMesaTotal}>R$ {totalComanda.toFixed(2)}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span className={styles.comandaMesaTitle}>COMANDA #{comanda.id}</span>
+                                  {comanda.status === 'fechamento_solicitado' && (
+                                    <span className={styles.contaSolicitadaBadge}>⚠️ CONTA SOLICITADA</span>
+                                  )}
+                                </div>
+                                <span className={styles.comandaMesaTotal}>
+                                  R$ {totalComanda.toFixed(2).replace('.', ',')}
+                                </span>
                               </div>
+
                               <div className={styles.comandaMesaItens}>
                                 {comanda.itens.map((item) => (
-                                  <div key={item.id} className={styles.mesaCardItem}>
-                                    <span className={styles.mesaCardItemQty}>{item.quantidade}x</span>
-                                    <span className={styles.mesaCardItemName}>{item.item_nome}</span>
-                                    <span className={styles.mesaCardItemPrice}>
-                                      R$ {((item.preco ?? 0) * item.quantidade).toFixed(2)}
-                                    </span>
+                                  <div key={item.id} className={styles.comandaItemRow}>
+                                    <span>{item.quantidade}x {item.item_nome}</span>
+                                    <span>R$ {((item.preco ?? 0) * item.quantidade).toFixed(2).replace('.', ',')}</span>
                                   </div>
                                 ))}
                               </div>
+
+                              {comanda.status === 'fechamento_solicitado' && (
+                                <div className={styles.comandaMesaAcoes}>
+                                  <button
+                                    className={`btn btn-primary ${styles.confirmarPagamentoBtn}`}
+                                    onClick={() => confirmarPagamento(comanda.id)}
+                                  >
+                                    💵 CONFIRMAR PAGAMENTO & ENCERRAR
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -350,26 +455,22 @@ export default function StaffPage() {
                     )}
                   </div>
 
-                  <div className={styles.mesaCardFooter}>
-                    <span className={styles.totalLabel}>TOTAL CONSOLIDADO:</span>
-                    <span className={styles.totalValue}>R$ {totalMesa.toFixed(2)}</span>
-                  </div>
+                  {isOcupada && (
+                    <div className={styles.mesaCardFooter}>
+                      <span>Total Consolidado:</span>
+                      <strong>R$ {totalMesa.toFixed(2).replace('.', ',')}</strong>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
-        ) : comandas.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>🍳</div>
-            <p>Nenhum pedido ativo no momento.</p>
-            <span>Os novos pedidos das mesas aparecerão aqui em tempo real.</span>
-          </div>
         ) : (
-          <div className={styles.kanbanBoard}>
-            {renderColuna('NOVOS', '📥', itensPendente, 'pendente')}
-            {renderColuna('EM PREPARO', '🔥', itensPreparando, 'preparando')}
-            {renderColuna('PRONTO', '🔔', itensPronto, 'pronto')}
-            {renderColuna('ENTREGUE', '✅', itensEntregue, 'entregue')}
+          <div className={styles.kanbanContainer}>
+            {renderColuna('PENDENTE', '📥', itensPendente, 'pendente')}
+            {renderColuna('PREPARANDO', '🔥', itensPreparando, 'preparando')}
+            {renderColuna('PRONTO', '✅', itensPronto, 'pronto')}
+            {renderColuna('ENTREGUE', '🤝', itensEntregue, 'entregue')}
           </div>
         )}
       </main>

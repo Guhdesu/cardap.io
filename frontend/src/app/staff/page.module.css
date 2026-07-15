@@ -584,6 +584,63 @@
   background: var(--color-white);
 }
 
+/* Animação e Estilos de Fechamento */
+.mesaCardPulsante {
+  border-color: var(--color-accent) !important;
+  animation: bordaPulsante 1.5s infinite alternate ease-in-out;
+  box-shadow: 8px 8px 0px var(--color-accent) !important;
+}
+
+@keyframes bordaPulsante {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.015);
+  }
+}
+
+.contaSolicitadaBadge {
+  background: var(--color-accent);
+  color: var(--color-white);
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.comandaMesaAcoes {
+  padding: 8px 12px 12px;
+  background: var(--color-white);
+  border-top: 1px dashed var(--color-border);
+}
+
+.confirmarPagamentoBtn {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  justify-content: center;
+  background: var(--color-accent) !important;
+  color: var(--color-white) !important;
+  box-shadow: 2px 2px 0px var(--color-ink) !important;
+}
+
+.confirmarPagamentoBtn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--color-ink) !important;
+}
+
+.toastFechamento {
+  background: var(--color-accent) !important;
+  color: var(--color-white) !important;
+  border-color: var(--color-ink) !important;
+}
+
+
 
 
 

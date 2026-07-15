@@ -14,7 +14,7 @@ export interface ItemCardapio {
 export interface Comanda {
   id: number;
   mesa_id: number;
-  status: 'aberta' | 'fechada';
+  status: 'aberta' | 'fechamento_solicitado' | 'encerrada' | 'fechada';
   criado_em: string;
 }
 

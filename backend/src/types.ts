@@ -3,7 +3,7 @@
 // ============================================================
 
 export type StatusPedido = 'pendente' | 'preparando' | 'pronto' | 'entregue';
-export type StatusComanda = 'aberta' | 'fechada';
+export type StatusComanda = 'aberta' | 'fechamento_solicitado' | 'encerrada' | 'fechada';
 
 export interface Mesa {
   id: number;

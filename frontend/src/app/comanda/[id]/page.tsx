@@ -30,6 +30,11 @@ export default function ComandaPage() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados do checkout/fechamento
+  const [fechamentoSolicitado, setFechamentoSolicitado] = useState(false);
+  const [encerrada, setEncerrada] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
   // Inicialização
   useEffect(() => {
     const init = async () => {
@@ -59,6 +64,12 @@ export default function ComandaPage() {
         setComanda(comandaData);
         setPedidos(comandaData.itens || []);
 
+        if (comandaData.status === 'fechamento_solicitado') {
+          setFechamentoSolicitado(true);
+        } else if (comandaData.status === 'encerrada') {
+          setEncerrada(true);
+        }
+
         // Sincroniza localmente
         localStorage.setItem('comanda_id', String(comandaId));
         localStorage.setItem('mesa_id', String(comandaData.mesa_id));
@@ -82,6 +93,22 @@ export default function ComandaPage() {
           setPedidos((prev) =>
             prev.map((p) => (p.id === data.pedido_item_id ? { ...p, status: data.status } : p))
           );
+        });
+
+        socket.on('comanda_encerrada', (data: { comanda_id: number }) => {
+          if (Number(data.comanda_id) === comandaId) {
+            localStorage.removeItem('sessao_id');
+            localStorage.removeItem('mesa_id');
+            localStorage.removeItem('comanda_id');
+            localStorage.removeItem(`carrinho_comanda_${comandaId}`);
+            setEncerrada(true);
+          }
+        });
+
+        socket.on('fechamento_solicitado', (data: { comanda_id: number }) => {
+          if (Number(data.comanda_id) === comandaId) {
+            setFechamentoSolicitado(true);
+          }
         });
       } catch (err) {
         console.error('[init] Falha na inicialização da comanda:', err);
@@ -110,6 +137,7 @@ export default function ComandaPage() {
   const totalConsolidado = totalPedidos + totalCarrinho;
 
   const adicionarAoCarrinho = (item: ItemCardapio) => {
+    if (fechamentoSolicitado) return;
     setCarrinho((prev) => {
       const existe = prev.find((i) => i.item.id === item.id);
       if (existe) return prev.map((i) => i.item.id === item.id ? { ...i, quantidade: i.quantidade + 1 } : i);
@@ -118,6 +146,7 @@ export default function ComandaPage() {
   };
 
   const removerDoCarrinho = (itemId: number) => {
+    if (fechamentoSolicitado) return;
     setCarrinho((prev) => {
       const existe = prev.find((i) => i.item.id === itemId);
       if (!existe) return prev;
@@ -127,7 +156,7 @@ export default function ComandaPage() {
   };
 
   const enviarPedido = async () => {
-    if (!comanda || carrinho.length === 0) return;
+    if (!comanda || carrinho.length === 0 || fechamentoSolicitado) return;
     setEnviando(true);
 
     try {
@@ -152,7 +181,8 @@ export default function ComandaPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Falha ao enviar o pedido.');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Falha ao enviar o pedido.');
       }
 
       const novosPedidos: PedidoItem[] = await res.json();
@@ -167,6 +197,50 @@ export default function ComandaPage() {
       setEnviando(false);
     }
   };
+
+  const confirmarFechamento = async () => {
+    setShowConfirmModal(false);
+    try {
+      const sessaoId = localStorage.getItem('sessao_id') || '';
+      const res = await fetch(`${API}/comanda/${comandaId}/solicitar-fechamento`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-sessao-id': sessaoId,
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Falha ao solicitar fechamento da conta.');
+      }
+
+      setFechamentoSolicitado(true);
+      setActiveTab('pedidos');
+    } catch (err: any) {
+      alert(err.message || 'Erro ao fechar conta.');
+    }
+  };
+
+  // Se a comanda foi paga / encerrada
+  if (encerrada) {
+    return (
+      <div className={styles.thankYouContainer}>
+        <div className={styles.thankYouCard}>
+          <div className={styles.successIcon}>🎉</div>
+          <h2 className={styles.successTitle}>Conta Paga!</h2>
+          <p className={styles.successText}>Muito obrigado pela preferência. Volte sempre!</p>
+          <button
+            className="btn btn-primary"
+            onClick={() => router.push('/')}
+            style={{ width: '100%' }}
+          >
+            VOLTAR AO INÍCIO
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -230,7 +304,12 @@ export default function ComandaPage() {
         {activeTab === 'carrinho' && (
           <div>
             <h2 className={styles.sectionTitle}>ITENS PARA ENVIAR</h2>
-            {carrinho.length === 0 ? (
+            {fechamentoSolicitado ? (
+              <div className={styles.fechamentoAguardando}>
+                <span>⌛ CONTA SOLICITADA</span>
+                <p>Esta comanda está em processo de fechamento. Novos pedidos estão bloqueados.</p>
+              </div>
+            ) : carrinho.length === 0 ? (
               <div className={styles.empty}>
                 <p>Nenhum item adicionado ao carrinho.</p>
                 <Link href={`/mesa/${comanda.mesa_id}`} className="btn btn-outline">
@@ -317,17 +396,44 @@ export default function ComandaPage() {
                 <span>R$ {totalConsolidado.toFixed(2).replace('.', ',')}</span>
               </div>
 
-              <button
-                className="btn btn-outline"
-                style={{ width: '100%', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
-                onClick={() => alert('Sua solicitação de fechamento foi enviada ao garçom!')}
-              >
-                🧮 SOLICITAR FECHAMENTO
-              </button>
+              {fechamentoSolicitado ? (
+                <div className={styles.fechamentoAguardando}>
+                  <span>⌛ CONTA SOLICITADA</span>
+                  <p>Aguarde o garçom para realizar o pagamento e liberar a mesa.</p>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-outline"
+                  style={{ width: '100%', borderColor: 'var(--color-accent)', color: 'var(--color-accent)', fontWeight: 800 }}
+                  onClick={() => setShowConfirmModal(true)}
+                >
+                  🧮 PEDIR A CONTA / FECHAR COMANDA
+                </button>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* Confirm Close Modal */}
+      {showConfirmModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>Confirmar Fechamento?</h3>
+            <p className={styles.modalText}>
+              Tem certeza que deseja solicitar o fechamento da conta? Você não poderá fazer novos pedidos nesta comanda.
+            </p>
+            <div className={styles.modalActions}>
+              <button className="btn btn-outline" onClick={() => setShowConfirmModal(false)}>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" onClick={confirmarFechamento}>
+                Pedir a Conta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
