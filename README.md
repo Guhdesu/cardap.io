@@ -138,7 +138,7 @@ Descrição das entidades, intenções de design e diagrama de relacionamentos: 
 | Isis Bruna | — |
 | Denny Rodrigues | [@DennyCarmo](https://github.com/DennyRodrigues/) |
 | Johnny Gabriel | — |
-| Saullo Augusto | — |
+| Saullo Augusto | [@s4uullo](https://github.com/s4uullo) |
 
 ---
 
