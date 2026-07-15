@@ -38,9 +38,8 @@ export function comandaRouter(io: SocketServer): Router {
 
       // Busca os itens do pedido e seus preços atuais
       const itensResult = await pool.query(
-        `SELECT pi.id, pi.item_id, pi.item_nome, pi.quantidade, pi.observacao, pi.status, pi.criado_em, ci.preco
+        `SELECT pi.id, pi.item_id, pi.item_nome, pi.quantidade, pi.observacao, pi.status, pi.criado_em, pi.preco_unitario
          FROM pedido_itens pi
-         LEFT JOIN cardapio_itens ci ON pi.item_id = ci.id
          WHERE pi.comanda_id = $1
          ORDER BY pi.criado_em ASC`,
          [id]
@@ -55,7 +54,7 @@ export function comandaRouter(io: SocketServer): Router {
         observacao: row.observacao,
         status: row.status,
         criado_em: row.criado_em,
-        preco: row.preco ? parseFloat(row.preco) : 0,
+        preco: row.preco_unitario ? parseFloat(row.preco_unitario) : 0,
       }));
 
       const total = itens.reduce((sum, item) => sum + item.preco * item.quantidade, 0);

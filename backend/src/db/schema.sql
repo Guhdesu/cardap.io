@@ -37,14 +37,15 @@ CREATE TABLE IF NOT EXISTS comandas (
 );
 
 CREATE TABLE IF NOT EXISTS pedido_itens (
-  id          SERIAL PRIMARY KEY,
-  comanda_id  INTEGER REFERENCES comandas(id),
-  item_id     INTEGER REFERENCES cardapio_itens(id),
-  item_nome   VARCHAR(100) NOT NULL,
-  quantidade  INTEGER      NOT NULL DEFAULT 1,
-  observacao  TEXT         DEFAULT '',
-  status      VARCHAR(20)  DEFAULT 'pendente', -- pendente | preparando | pronto | entregue
-  criado_em   TIMESTAMPTZ  DEFAULT NOW()
+  id             SERIAL PRIMARY KEY,
+  comanda_id     INTEGER REFERENCES comandas(id),
+  item_id        INTEGER REFERENCES cardapio_itens(id),
+  item_nome      VARCHAR(100) NOT NULL,
+  quantidade     INTEGER      NOT NULL DEFAULT 1,
+  observacao     TEXT         DEFAULT '',
+  status         VARCHAR(20)  DEFAULT 'pendente', -- pendente | preparando | pronto | entregue
+  criado_em      TIMESTAMPTZ  DEFAULT NOW(),
+  preco_unitario NUMERIC(10, 2)
 );
 
 -- ── Seed: Mesas ───────────────────────────────────────────
@@ -109,3 +110,16 @@ ON CONFLICT DO NOTHING;
 ALTER TABLE comandas ADD COLUMN IF NOT EXISTS encerrada_em TIMESTAMPTZ;
 ALTER TABLE comandas DROP CONSTRAINT IF EXISTS chk_comandas_status;
 ALTER TABLE comandas ADD CONSTRAINT chk_comandas_status CHECK (status IN ('aberta', 'fechamento_solicitado', 'encerrada', 'fechada'));
+
+-- Garante a coluna preco_unitario em pedido_itens para preservar histórico de preços
+ALTER TABLE pedido_itens ADD COLUMN IF NOT EXISTS preco_unitario NUMERIC(10, 2);
+
+-- Migra dados existentes se houver registros sem preco_unitario
+UPDATE pedido_itens pi
+SET preco_unitario = ci.preco
+FROM cardapio_itens ci
+WHERE pi.item_id = ci.id AND pi.preco_unitario IS NULL;
+
+-- Define preco_unitario como NOT NULL após a migração (se houver dados sem correspondência, usa fallback 0.00)
+UPDATE pedido_itens SET preco_unitario = 0.00 WHERE preco_unitario IS NULL;
+ALTER TABLE pedido_itens ALTER COLUMN preco_unitario SET NOT NULL;

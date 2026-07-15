@@ -6,11 +6,14 @@ export class PedidoRepository implements IPedidoRepository {
   async criar(comanda_id: number, itens: NovoPedidoItem[]): Promise<PedidoItem[]> {
     const ids = itens.map((i) => i.item_id);
     const cardapioRes = await pool.query(
-      'SELECT id, nome FROM cardapio_itens WHERE id = ANY($1)',
+      'SELECT id, nome, preco FROM cardapio_itens WHERE id = ANY($1)',
       [ids]
     );
     const itemNomes = new Map<number, string>(
       cardapioRes.rows.map((row) => [row.id, row.nome])
+    );
+    const itemPrecos = new Map<number, number>(
+      cardapioRes.rows.map((row) => [row.id, parseFloat(row.preco)])
     );
 
     const client = await pool.connect();
@@ -20,9 +23,10 @@ export class PedidoRepository implements IPedidoRepository {
 
       for (const item of itens) {
         const nome = itemNomes.get(item.item_id) ?? 'Item Desconhecido';
+        const preco = itemPrecos.get(item.item_id) ?? 0.00;
         const res = await client.query(
-          'INSERT INTO pedido_itens (comanda_id, item_id, item_nome, quantidade, observacao, status, criado_em) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id, comanda_id, item_id, item_nome, quantidade, observacao, status, criado_em',
-          [comanda_id, item.item_id, nome, item.quantidade, item.observacao ?? '', 'pendente']
+          'INSERT INTO pedido_itens (comanda_id, item_id, item_nome, quantidade, observacao, status, preco_unitario, criado_em) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING id, comanda_id, item_id, item_nome, quantidade, observacao, status, preco_unitario, criado_em',
+          [comanda_id, item.item_id, nome, item.quantidade, item.observacao ?? '', 'pendente', preco]
         );
         const row = res.rows[0];
         itensCriados.push({
@@ -34,6 +38,7 @@ export class PedidoRepository implements IPedidoRepository {
           observacao: row.observacao,
           status: row.status,
           criado_em: row.criado_em,
+          preco: parseFloat(row.preco_unitario),
         });
       }
 
@@ -49,14 +54,11 @@ export class PedidoRepository implements IPedidoRepository {
 
   async atualizarStatus(id: number, status: StatusPedido): Promise<PedidoItem | null> {
     const res = await pool.query(
-      'UPDATE pedido_itens SET status = $1 WHERE id = $2 RETURNING id, comanda_id, item_id, item_nome, quantidade, observacao, status, criado_em',
+      'UPDATE pedido_itens SET status = $1 WHERE id = $2 RETURNING id, comanda_id, item_id, item_nome, quantidade, observacao, status, preco_unitario, criado_em',
       [status, id]
     );
     if (res.rows.length === 0) return null;
     const row = res.rows[0];
-
-    const priceRes = await pool.query('SELECT preco FROM cardapio_itens WHERE id = $1', [row.item_id]);
-    const preco = priceRes.rows[0] ? parseFloat(priceRes.rows[0].preco) : 0;
 
     return {
       id: row.id,
@@ -67,15 +69,14 @@ export class PedidoRepository implements IPedidoRepository {
       observacao: row.observacao,
       status: row.status,
       criado_em: row.criado_em,
-      preco,
+      preco: row.preco_unitario ? parseFloat(row.preco_unitario) : 0,
     };
   }
 
   async listarPorComanda(comanda_id: number): Promise<PedidoItem[]> {
     const res = await pool.query(
-      `SELECT pi.id, pi.comanda_id, pi.item_id, pi.item_nome, pi.quantidade, pi.observacao, pi.status, pi.criado_em, ci.preco 
+      `SELECT pi.id, pi.comanda_id, pi.item_id, pi.item_nome, pi.quantidade, pi.observacao, pi.status, pi.criado_em, pi.preco_unitario 
        FROM pedido_itens pi
-       LEFT JOIN cardapio_itens ci ON pi.item_id = ci.id
        WHERE pi.comanda_id = $1 
        ORDER BY pi.criado_em ASC`,
       [comanda_id]
@@ -89,7 +90,7 @@ export class PedidoRepository implements IPedidoRepository {
       observacao: row.observacao,
       status: row.status,
       criado_em: row.criado_em,
-      preco: row.preco ? parseFloat(row.preco) : 0,
+      preco: row.preco_unitario ? parseFloat(row.preco_unitario) : 0,
     }));
   }
 
@@ -108,11 +109,10 @@ export class PedidoRepository implements IPedidoRepository {
         pi.observacao,
         pi.status AS item_status,
         pi.criado_em AS item_criado_em,
-        ci.preco AS item_preco
+        pi.preco_unitario AS item_preco
       FROM comandas c
       JOIN mesas m ON c.mesa_id = m.id
       LEFT JOIN pedido_itens pi ON pi.comanda_id = c.id
-      LEFT JOIN cardapio_itens ci ON pi.item_id = ci.id
       WHERE c.status = 'aberta'
       ORDER BY c.criado_em DESC, pi.criado_em ASC
     `;
