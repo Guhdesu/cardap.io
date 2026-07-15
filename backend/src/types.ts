@@ -18,6 +18,7 @@ export interface ItemCardapio {
   categoria: string;
   disponivel: boolean;
   imagem_url: string;
+  imagem_public_id?: string | null;
 }
 
 export interface Comanda {

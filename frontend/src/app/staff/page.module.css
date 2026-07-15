@@ -888,6 +888,55 @@
   font-weight: 800;
 }
 
+/* Área de Upload de Imagem */
+.uploadArea {
+  border: 2px dashed var(--color-ink);
+  background: var(--color-surface);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 800;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, border-color 0.15s;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.uploadArea:hover {
+  background: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+.progressContainer {
+  width: 100%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 8px;
+  height: 22px;
+}
+
+.progressBar {
+  background: var(--color-accent);
+  height: 100%;
+  transition: width 0.1s ease;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadErrorMsg {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin: 6px 0 0 0;
+  text-transform: uppercase;
+}
+
 
 
 

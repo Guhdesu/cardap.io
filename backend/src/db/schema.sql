@@ -19,13 +19,14 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 CREATE TABLE IF NOT EXISTS cardapio_itens (
-  id          SERIAL PRIMARY KEY,
-  nome        VARCHAR(100)   NOT NULL,
-  descricao   TEXT,
-  preco       NUMERIC(10, 2) NOT NULL,
-  categoria   VARCHAR(50),
-  disponivel  BOOLEAN        DEFAULT true,
-  imagem_url  TEXT
+  id                SERIAL PRIMARY KEY,
+  nome              VARCHAR(100)   NOT NULL,
+  descricao         TEXT,
+  preco             NUMERIC(10, 2) NOT NULL,
+  categoria         VARCHAR(50),
+  disponivel        BOOLEAN        DEFAULT true,
+  imagem_url        TEXT,
+  imagem_public_id  VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS comandas (
@@ -123,3 +124,6 @@ WHERE pi.item_id = ci.id AND pi.preco_unitario IS NULL;
 -- Define preco_unitario como NOT NULL após a migração (se houver dados sem correspondência, usa fallback 0.00)
 UPDATE pedido_itens SET preco_unitario = 0.00 WHERE preco_unitario IS NULL;
 ALTER TABLE pedido_itens ALTER COLUMN preco_unitario SET NOT NULL;
+
+-- Garante a coluna imagem_public_id em cardapio_itens
+ALTER TABLE cardapio_itens ADD COLUMN IF NOT EXISTS imagem_public_id VARCHAR(255);

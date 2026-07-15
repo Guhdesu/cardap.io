@@ -84,6 +84,10 @@ export default function StaffPanel() {
   const [modalPreco, setModalPreco] = useState('');
   const [modalCategoria, setModalCategoria] = useState('');
   const [modalImagemUrl, setModalImagemUrl] = useState('');
+  const [modalImagemPublicId, setModalImagemPublicId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [modalDisponivel, setModalDisponivel] = useState(true);
   const [avisoExclusao, setAvisoExclusao] = useState<string | null>(null);
 
@@ -250,7 +254,6 @@ export default function StaffPanel() {
     }
   };
 
-  // Funções de Gerenciamento de Cardápio
   const abrirCriarItem = () => {
     setItemEditando(null);
     setModalNome('');
@@ -258,6 +261,10 @@ export default function StaffPanel() {
     setModalPreco('');
     setModalCategoria('');
     setModalImagemUrl('');
+    setModalImagemPublicId(null);
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadError(null);
     setModalDisponivel(true);
     setShowItemModal(true);
   };
@@ -269,6 +276,10 @@ export default function StaffPanel() {
     setModalPreco(String(item.preco));
     setModalCategoria(item.categoria);
     setModalImagemUrl(item.imagem_url);
+    setModalImagemPublicId(item.imagem_public_id || null);
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadError(null);
     setModalDisponivel(item.disponivel);
     setShowItemModal(true);
   };
@@ -292,8 +303,80 @@ export default function StaffPanel() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Formato inválido. Apenas imagens JPG e PNG são permitidas.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Imagem muito grande. O limite máximo é 5 MB.');
+      return;
+    }
+
+    setUploadError(null);
+    setUploading(true);
+    setUploadProgress(10);
+
+    try {
+      const formData = new FormData();
+      formData.append('imagem', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API}/admin/cardapio/upload-imagem`);
+      
+      const token = getStaffToken();
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      };
+
+      xhr.onload = () => {
+        setUploading(false);
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          setModalImagemUrl(response.secure_url);
+          setModalImagemPublicId(response.public_id);
+          setUploadProgress(100);
+        } else {
+          try {
+            const errData = JSON.parse(xhr.responseText);
+            setUploadError(errData.error || 'Falha ao enviar imagem.');
+          } catch {
+            setUploadError('Erro de rede ou formato incompatível.');
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        setUploading(false);
+        setUploadError('Erro de conexão ao enviar imagem.');
+      };
+
+      xhr.send(formData);
+    } catch (err: any) {
+      setUploading(false);
+      setUploadError(err.message || 'Erro inesperado.');
+    }
+  };
+
   const salvarItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploading) {
+      alert('Aguarde a imagem terminar de subir para salvar.');
+      return;
+    }
+
     if (!modalNome || !modalCategoria || !modalPreco) {
       alert('Nome, Categoria e Preço são obrigatórios.');
       return;
@@ -311,6 +394,7 @@ export default function StaffPanel() {
       preco: priceNum,
       categoria: modalCategoria,
       imagem_url: modalImagemUrl,
+      imagem_public_id: modalImagemPublicId,
       disponivel: modalDisponivel,
     };
 
@@ -742,19 +826,50 @@ export default function StaffPanel() {
                     </div>
 
                     <div className={styles.formGroup}>
-                      <label>URL da Imagem</label>
-                      <input
-                        type="url"
-                        value={modalImagemUrl}
-                        onChange={(e) => setModalImagemUrl(e.target.value)}
-                        placeholder="Ex: https://imagens.com/burgers.jpg"
-                      />
+                      <label>Imagem do Item (JPG ou PNG, máx. 5MB)</label>
+                      <div 
+                        className={styles.uploadArea}
+                        onClick={() => document.getElementById('file-upload-input')?.click()}
+                      >
+                        <input
+                          id="file-upload-input"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          style={{ display: 'none' }}
+                        />
+                        <span>{uploading ? 'Enviando...' : '📷 Clique para selecionar a imagem'}</span>
+                      </div>
+
+                      {uploading && (
+                        <div className={styles.progressContainer}>
+                          <div className={styles.progressBar} style={{ width: `${uploadProgress}%` }}>
+                            {uploadProgress}%
+                          </div>
+                        </div>
+                      )}
+
+                      {uploadError && (
+                        <p className={styles.uploadErrorMsg}>❌ {uploadError}</p>
+                      )}
                     </div>
 
                     {modalImagemUrl && (
                       <div className={styles.imgPreview}>
                         <p>Preview da Imagem:</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={modalImagemUrl} alt="Preview" />
+                        <button 
+                          type="button" 
+                          className="btn btn-outline" 
+                          style={{ marginTop: '8px', fontSize: '0.75rem', padding: '4px 8px', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                          onClick={() => {
+                            setModalImagemUrl('');
+                            setModalImagemPublicId(null);
+                          }}
+                        >
+                          Remover Imagem
+                        </button>
                       </div>
                     )}
 

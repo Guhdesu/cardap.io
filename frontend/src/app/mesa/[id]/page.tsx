@@ -201,7 +201,7 @@ export default function MesaPage() {
               <div key={item.id} className={`card-item ${styles.card}`}>
                 <div className={styles.cardImg}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.imagem_url} alt={item.nome} />
+                  <img src={item.imagem_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'} alt={item.nome} />
                 </div>
                 <div className={styles.cardBody}>
                   <div>
