@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ItemCardapio, ItemCarrinho, Comanda } from '@/lib/types';
+import { getSocket } from '@/lib/socket';
 import styles from './page.module.css';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -88,6 +89,25 @@ export default function MesaPage() {
     init();
   }, [mesaId, router]);
 
+  // Socket.io reativo para atualização do cardápio em tempo real
+  useEffect(() => {
+    const socket = getSocket();
+    socket.connect();
+    socket.emit('join_mesa', { mesaId });
+
+    socket.on('cardapio_atualizado', () => {
+      fetch(`${API}/cardapio`)
+        .then((r) => r.json())
+        .then(setCardapio)
+        .catch((e) => console.error('[Socket] Erro ao recarregar cardápio:', e));
+    });
+
+    return () => {
+      socket.off('cardapio_atualizado');
+      socket.disconnect();
+    };
+  }, [mesaId]);
+
   // Persiste o carrinho no localStorage sempre que mudar
   useEffect(() => {
     if (!loading && comanda?.id) {
@@ -103,6 +123,7 @@ export default function MesaPage() {
   const qtdCarrinho = carrinho.reduce((sum, i) => sum + i.quantidade, 0);
 
   const adicionarAoCarrinho = (item: ItemCardapio) => {
+    if (!item.disponivel) return;
     setCarrinho((prev) => {
       const existe = prev.find((i) => i.item.id === item.id);
       if (existe) return prev.map((i) => i.item.id === item.id ? { ...i, quantidade: i.quantidade + 1 } : i);
@@ -191,7 +212,9 @@ export default function MesaPage() {
                     <span className={`price ${styles.itemPreco}`}>
                       R$ {item.preco.toFixed(2).replace('.', ',')}
                     </span>
-                    {qty === 0 ? (
+                    {!item.disponivel ? (
+                      <span className={styles.esgotadoBadge}>ESGOTADO</span>
+                    ) : qty === 0 ? (
                       <button className="btn-add" onClick={() => adicionarAoCarrinho(item)}>+</button>
                     ) : (
                       <div className={styles.qtyControl}>

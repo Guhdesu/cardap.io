@@ -20,6 +20,7 @@ import { qrcodeRouter } from './routes/qrcode';
 import { authRouter } from './routes/auth';
 import { comandaRouter } from './routes/comanda';
 import { sessaoRouter } from './routes/sessao';
+import { adminCardapioRouter } from './routes/adminCardapio';
 
 // ── Socket ────────────────────────────────────────────────
 import { setupSocketEvents } from './socket/events';
@@ -66,6 +67,7 @@ app.use('/cardapio', cardapioRouter(cardapioService));
 app.use('/mesas', mesasRouter(mesaService));
 app.use('/pedidos', pedidosRouter(pedidoService));
 app.use('/qrcode', qrcodeRouter(mesaService, sessaoService, FRONTEND_URL));
+app.use('/admin/cardapio', adminCardapioRouter(io));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket';
-import { PedidoItem, StatusPedido, ComandaComItens, Mesa } from '@/lib/types';
+import { PedidoItem, StatusPedido, ComandaComItens, Mesa, ItemCardapio } from '@/lib/types';
 import styles from './page.module.css';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -73,7 +73,19 @@ export default function StaffPanel() {
   const [novoFechamento, setNovoFechamento] = useState<string | null>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'kanban' | 'mesas'>('kanban');
+  const [activeTab, setActiveTab] = useState<'kanban' | 'mesas' | 'cardapio'>('kanban');
+
+  // Gerenciamento de Cardápio (Admin)
+  const [itensCardapio, setItensCardapio] = useState<ItemCardapio[]>([]);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [itemEditando, setItemEditando] = useState<ItemCardapio | null>(null); // null = novo
+  const [modalNome, setModalNome] = useState('');
+  const [modalDescricao, setModalDescricao] = useState('');
+  const [modalPreco, setModalPreco] = useState('');
+  const [modalCategoria, setModalCategoria] = useState('');
+  const [modalImagemUrl, setModalImagemUrl] = useState('');
+  const [modalDisponivel, setModalDisponivel] = useState(true);
+  const [avisoExclusao, setAvisoExclusao] = useState<string | null>(null);
 
   // Recupera token do localStorage/cookie
   const getStaffToken = () => {
@@ -178,10 +190,30 @@ export default function StaffPanel() {
       );
     });
 
+    // Escuta atualizações de cardápio do socket para manter reatividade
+    socket.on('cardapio_atualizado', () => {
+      if (activeTab === 'cardapio' && usuario?.role === 'admin') {
+        fetch(`${API}/admin/cardapio`, { headers: authHeader() })
+          .then((r) => r.json())
+          .then(setItensCardapio)
+          .catch((e) => console.error('[Cardapio Admin Socket] Erro:', e));
+      }
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [carregandoAuth, usuario]);
+  }, [carregandoAuth, usuario, activeTab]);
+
+  // Carrega lista de cardápio do administrador
+  useEffect(() => {
+    if (activeTab === 'cardapio' && usuario?.role === 'admin') {
+      fetch(`${API}/admin/cardapio`, { headers: authHeader() })
+        .then((r) => r.json())
+        .then(setItensCardapio)
+        .catch((e) => console.error('[Cardapio Admin] Erro:', e));
+    }
+  }, [activeTab, usuario]);
 
   const atualizarStatus = async (itemId: number, status: StatusPedido) => {
     await fetch(`${API}/pedidos/${itemId}/status`, {
@@ -218,6 +250,128 @@ export default function StaffPanel() {
     }
   };
 
+  // Funções de Gerenciamento de Cardápio
+  const abrirCriarItem = () => {
+    setItemEditando(null);
+    setModalNome('');
+    setModalDescricao('');
+    setModalPreco('');
+    setModalCategoria('');
+    setModalImagemUrl('');
+    setModalDisponivel(true);
+    setShowItemModal(true);
+  };
+
+  const abrirEditarItem = (item: ItemCardapio) => {
+    setItemEditando(item);
+    setModalNome(item.nome);
+    setModalDescricao(item.descricao);
+    setModalPreco(String(item.preco));
+    setModalCategoria(item.categoria);
+    setModalImagemUrl(item.imagem_url);
+    setModalDisponivel(item.disponivel);
+    setShowItemModal(true);
+  };
+
+  const toggleDisponibilidade = async (item: ItemCardapio) => {
+    try {
+      const res = await fetch(`${API}/admin/cardapio/${item.id}/disponibilidade`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ disponivel: !item.disponivel }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Falha ao atualizar disponibilidade.');
+      }
+      
+      const itemAtualizado = await res.json();
+      setItensCardapio((prev) => prev.map((i) => i.id === item.id ? itemAtualizado : i));
+    } catch (e: any) {
+      alert(e.message || 'Erro ao alterar disponibilidade.');
+    }
+  };
+
+  const salvarItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalNome || !modalCategoria || !modalPreco) {
+      alert('Nome, Categoria e Preço são obrigatórios.');
+      return;
+    }
+
+    const priceNum = parseFloat(modalPreco);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      alert('O preço deve ser maior que zero.');
+      return;
+    }
+
+    const payload = {
+      nome: modalNome,
+      descricao: modalDescricao,
+      preco: priceNum,
+      categoria: modalCategoria,
+      imagem_url: modalImagemUrl,
+      disponivel: modalDisponivel,
+    };
+
+    try {
+      const url = itemEditando ? `${API}/admin/cardapio/${itemEditando.id}` : `${API}/admin/cardapio`;
+      const method = itemEditando ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Falha ao salvar item.');
+      }
+
+      const itemSalvo = await res.json();
+      
+      if (itemEditando) {
+        setItensCardapio((prev) => prev.map((i) => i.id === itemEditando.id ? itemSalvo : i));
+      } else {
+        setItensCardapio((prev) => [...prev, itemSalvo]);
+      }
+      
+      setShowItemModal(false);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar item.');
+    }
+  };
+
+  const excluirItem = async (itemId: number) => {
+    if (!confirm('Deseja realmente excluir este item do cardápio?')) return;
+
+    try {
+      const res = await fetch(`${API}/admin/cardapio/${itemId}`, {
+        method: 'DELETE',
+        headers: authHeader(),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Falha ao excluir item.');
+      }
+
+      const data = await res.json();
+      if (data.marcado_indisponivel) {
+        setAvisoExclusao(data.mensagem);
+        // Atualiza a lista para marcar como esgotado/indisponível localmente
+        if (data.item) {
+          setItensCardapio((prev) => prev.map((i) => i.id === itemId ? data.item : i));
+        }
+      } else {
+        setItensCardapio((prev) => prev.filter((i) => i.id !== itemId));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Erro ao excluir item.');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('staff_token');
     router.replace('/staff/login');
@@ -231,6 +385,9 @@ export default function StaffPanel() {
       </div>
     );
   }
+
+  // Categorias disponíveis para o datalist no modal
+  const categoriasDisponiveis = Array.from(new Set(itensCardapio.map((i) => i.categoria)));
 
   // Achata e organiza todos os itens por status
   const todosItens = comandas.flatMap((c) =>
@@ -352,6 +509,14 @@ export default function StaffPanel() {
         >
           🪑 MESAS ATIVAS
         </button>
+        {usuario?.role === 'admin' && (
+          <button
+            className={`${styles.tabBtn} ${activeTab === 'cardapio' ? styles.tabBtnActive : ''}`}
+            onClick={() => setActiveTab('cardapio')}
+          >
+            🍔 GERENCIAR CARDÁPIO
+          </button>
+        )}
       </div>
 
       {/* Conteúdo Principal */}
@@ -464,6 +629,171 @@ export default function StaffPanel() {
                 </div>
               );
             })}
+          </div>
+        ) : activeTab === 'cardapio' ? (
+          <div className={styles.adminCardapioContainer}>
+            <div className={styles.adminCardapioHeader}>
+              <h2 className={styles.sectionTitle}>GERENCIAR CARDÁPIO</h2>
+              <button className="btn btn-primary" onClick={abrirCriarItem}>
+                ➕ ADICIONAR NOVO ITEM
+              </button>
+            </div>
+
+            <div className={styles.adminCardapioList}>
+              {itensCardapio.length === 0 ? (
+                <div className={styles.emptyCardList}>Nenhum item cadastrado no cardápio</div>
+              ) : (
+                itensCardapio.map((item) => (
+                  <div key={item.id} className={`${styles.adminItemCard} ${!item.disponivel ? styles.adminItemIndisponivel : ''}`}>
+                    <img src={item.imagem_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=120&q=80'} alt={item.nome} className={styles.adminItemImg} />
+                    <div className={styles.adminItemDetails}>
+                      <div className={styles.adminItemHeaderRow}>
+                        <span className={styles.adminItemCat}>{item.categoria.toUpperCase()}</span>
+                        <span className={`${styles.adminItemStatus} ${item.disponivel ? styles.statusAtivo : styles.statusInativo}`}>
+                          {item.disponivel ? 'Disponível' : 'Esgotado'}
+                        </span>
+                      </div>
+                      <h3 className={styles.adminItemNome}>{item.nome}</h3>
+                      <p className={styles.adminItemDesc}>{item.descricao}</p>
+                      <span className={styles.adminItemPreco}>R$ {item.preco.toFixed(2).replace('.', ',')}</span>
+                    </div>
+
+                    <div className={styles.adminItemAcoes}>
+                      <label className={styles.switchContainer}>
+                        <input
+                          type="checkbox"
+                          checked={item.disponivel}
+                          onChange={() => toggleDisponibilidade(item)}
+                        />
+                        <span className={styles.switchLabel}>Disponível</span>
+                      </label>
+                      <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '6px 12px' }} onClick={() => abrirEditarItem(item)}>
+                        ✏️ EDITAR
+                      </button>
+                      <button
+                        className="btn btn-outline"
+                        style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)', fontSize: '0.75rem', padding: '6px 12px' }}
+                        onClick={() => excluirItem(item.id)}
+                      >
+                        🗑️ EXCLUIR
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal de Item (Criar / Editar) */}
+            {showItemModal && (
+              <div className={styles.modalOverlay}>
+                <div className={styles.modal} style={{ maxWidth: '500px' }}>
+                  <h3 className={styles.modalTitle}>{itemEditando ? 'Editar Item' : 'Novo Item do Cardápio'}</h3>
+                  <form onSubmit={salvarItem} className={styles.modalForm}>
+                    <div className={styles.formGroup}>
+                      <label>Nome do Item *</label>
+                      <input
+                        type="text"
+                        value={modalNome}
+                        onChange={(e) => setModalNome(e.target.value)}
+                        placeholder="Ex: X-Salada Especial"
+                        required
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Descrição</label>
+                      <textarea
+                        value={modalDescricao}
+                        onChange={(e) => setModalDescricao(e.target.value)}
+                        placeholder="Ex: Blend de carne 150g, queijo cheddar..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup} style={{ flex: 1 }}>
+                        <label>Preço (R$) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={modalPreco}
+                          onChange={(e) => setModalPreco(e.target.value)}
+                          placeholder="Ex: 29.90"
+                          required
+                        />
+                      </div>
+
+                      <div className={styles.formGroup} style={{ flex: 1 }}>
+                        <label>Categoria *</label>
+                        <input
+                          type="text"
+                          list="categorias-list"
+                          value={modalCategoria}
+                          onChange={(e) => setModalCategoria(e.target.value)}
+                          placeholder="Digite ou selecione"
+                          required
+                        />
+                        <datalist id="categorias-list">
+                          {categoriasDisponiveis.map((cat) => (
+                            <option key={cat} value={cat} />
+                          ))}
+                        </datalist>
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>URL da Imagem</label>
+                      <input
+                        type="url"
+                        value={modalImagemUrl}
+                        onChange={(e) => setModalImagemUrl(e.target.value)}
+                        placeholder="Ex: https://imagens.com/burgers.jpg"
+                      />
+                    </div>
+
+                    {modalImagemUrl && (
+                      <div className={styles.imgPreview}>
+                        <p>Preview da Imagem:</p>
+                        <img src={modalImagemUrl} alt="Preview" />
+                      </div>
+                    )}
+
+                    <div className={styles.formGroupCheckbox}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={modalDisponivel}
+                          onChange={(e) => setModalDisponivel(e.target.checked)}
+                        />
+                        <span>Item disponível para pedidos</span>
+                      </label>
+                    </div>
+
+                    <div className={styles.modalActions}>
+                      <button type="button" className="btn btn-outline" onClick={() => setShowItemModal(false)}>
+                        Cancelar
+                      </button>
+                      <button type="submit" className="btn btn-primary">
+                        Salvar Item
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Aviso Exclusão Condicional */}
+            {avisoExclusao && (
+              <div className={styles.modalOverlay}>
+                <div className={styles.modal}>
+                  <h3 className={styles.modalTitle}>Item Inativado</h3>
+                  <p className={styles.modalText}>{avisoExclusao}</p>
+                  <button className="btn btn-primary" onClick={() => setAvisoExclusao(null)} style={{ width: '100%' }}>
+                    Entendido
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className={styles.kanbanContainer}>

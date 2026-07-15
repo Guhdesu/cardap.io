@@ -330,3 +330,15 @@
   color: var(--color-ink-soft);
   line-height: 1.5;
 }
+
+.esgotadoBadge {
+  background: var(--color-ink-soft);
+  color: var(--color-white);
+  font-size: 0.7rem;
+  font-weight: 950;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  border: 1.5px solid var(--color-ink);
+}
+
